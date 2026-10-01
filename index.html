@@ -1,0 +1,1511 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>OET ID Card Maker</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js",
+    "three/addons/exporters/OBJExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js",
+    "three/addons/exporters/GLTFExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js": "sha384-nbwtoZENJD3Vq+ACK0CuGQdPMuDWHkamC2KJD70EV5nfg6jQjfppKOea07YJN+N3",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js": "sha384-VofkvpG6HERhFCYbsUOHeNXBCqID2nfqkQqnVzE1jc/oPcz+qJ13ADdXH08hE+cQ"
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#FFFEFB;--fg:#191918;--muted:rgba(25,25,24,.55);--line:rgba(25,25,24,.16)}
+  :root[data-theme="dark"]{--bg:#191918;--fg:#FFFEFB;--muted:rgba(255,254,251,.55);--line:rgba(255,254,251,.18)}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:"Plus Jakarta Sans",sans-serif;transition:background .3s}
+  a{color:var(--fg)}a:hover{color:#E31937}
+  three-d-stage{--stage-bg:var(--bg);--stage-muted:var(--muted);transition:background .3s}
+  three-d-stage:not(:defined){visibility:hidden}
+  .ctrls{position:fixed;left:16px;top:50%;transform:translateY(-50%);z-index:10;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+  .theme{display:flex;border:1px solid var(--line);background:var(--bg)}
+  .theme button{all:unset;flex:1;text-align:center;cursor:pointer;font:500 12px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.02em;color:var(--muted);padding:10px 14px;transition:color .2s,background .2s}
+  .theme button:hover{color:var(--fg)}
+  .theme button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+  .preview-btn{all:unset;cursor:pointer;display:flex;justify-content:center;white-space:nowrap;align-items:center;gap:8px;box-sizing:border-box;padding:10px 14px;border:1px solid var(--line);background:var(--bg);color:var(--muted);font:500 12px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.02em;transition:color .2s,background .2s}
+  .preview-btn:hover{color:var(--fg)}
+  .preview-btn{justify-content:flex-start !important}
+  .preview-btn .ic{display:grid;place-items:center;width:15px;height:15px;flex:none}
+  .preview-btn .ic svg{display:block}
+  #theme-btn{color:var(--fg)}
+  .preview-btn[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+  
+  html[data-preview="true"] .hotspot,html[data-preview="true"] .scheme-pop,html[data-preview="true"] .panel,html[data-preview="true"] .scaler{display:none !important}
+  html[data-preview="true"] #restart-btn{display:none}
+  .panel{position:fixed;top:50%;left:16px;transform:translateY(-50%);z-index:10;width:264px;box-sizing:border-box;max-height:calc(100vh - 32px);overflow-y:auto;overscroll-behavior:contain;padding:16px;border:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column;gap:12px;transition:background .3s}
+  .panel h2{margin:0;font:600 13px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:.01em;color:var(--fg)}
+  .swatches{display:grid;grid-template-columns:repeat(3,40px);gap:8px;padding:4px}
+  .swatches button{all:unset;cursor:pointer;width:40px;height:32px;display:flex;flex-direction:column;outline:1px solid var(--line);outline-offset:0;overflow:hidden;transition:outline-color .2s}
+  .swatches button:hover{outline-color:var(--fg)}
+  .swatches button[aria-pressed="true"]{outline:2px solid var(--fg);outline-offset:2px}
+  .swatches i{flex:1}
+  .sect{display:flex;flex-direction:column;gap:12px}
+  .sect + .sect{padding-top:16px;border-top:1px solid var(--line)}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field > span,.row > span{white-space:nowrap;font:500 11px/1.2 "Plus Jakarta Sans",sans-serif;color:var(--fg);letter-spacing:.02em}
+  .input{all:unset;box-sizing:border-box;width:100%;height:36px;padding:0 10px;border:1px solid var(--line);font:500 13px/1 "Plus Jakarta Sans",sans-serif;color:var(--fg);background:transparent;transition:border-color .2s}
+  .input::placeholder{color:var(--muted);text-transform:none;letter-spacing:0}
+  .input:hover{border-color:var(--muted)}
+  .input:focus,.dd[data-open="true"] .input{border-color:var(--fg)}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .switch{all:unset;cursor:pointer;width:32px;height:18px;border:1px solid var(--line);position:relative;transition:background .2s,border-color .2s}
+  .switch::after{content:"";position:absolute;top:3px;left:3px;width:10px;height:10px;background:var(--muted);transition:transform .2s,background .2s}
+  .switch[aria-checked="true"]{background:var(--fg);border-color:var(--fg)}
+  .switch[aria-checked="true"]::after{transform:translateX(14px);background:var(--bg)}
+  .dd{position:relative}
+  .dd .input{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer}
+  .dd .input b{flex:1;min-width:0;text-align:left;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dd .input b.ph{color:var(--muted)}
+  .dd .input i{flex:none;width:6px;height:6px;border-right:1.5px solid var(--fg);border-bottom:1.5px solid var(--fg);transform:translateY(-2px) rotate(45deg);transition:transform .2s}
+  .dd[data-open="true"] .input i{transform:translateY(1px) rotate(-135deg)}
+  .dd ul{list-style:none;margin:-1px 0 0;padding:4px 0;background:var(--bg);border:1px solid var(--fg);display:none}
+  .dd[data-open="true"] ul{display:block}
+  .dd-pop{display:none;margin-top:-1px;border:1px solid var(--fg);background:var(--bg)}
+  .dd[data-open="true"] .dd-pop{display:block}
+  .dd-pop .dd-search{border:0;border-bottom:1px solid var(--line);height:34px}
+  .dd-pop ul{margin:0;border:0;max-height:200px;overflow-y:auto}
+  .dd li em{margin-left:auto;font-style:normal;font:600 10.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.06em;color:var(--muted)}
+  .dd li{display:flex;align-items:center;gap:8px;padding:8px 10px;font:500 12.5px/1.3 "Plus Jakarta Sans",sans-serif;color:var(--fg);cursor:pointer}
+  .dd li:hover{background:var(--line)}
+  .dd li[aria-disabled="true"]{color:var(--muted);cursor:not-allowed;background:none}
+  .dd li s{flex:none;width:12px;height:12px;border:1px solid var(--muted);box-sizing:border-box}
+  .dd li[aria-selected="true"] s{background:var(--fg);border-color:var(--fg);box-shadow:inset 0 0 0 2px var(--bg)}
+  .hint{font:400 11px/1.3 "Plus Jakarta Sans",sans-serif;color:var(--muted)}
+  .hotspot{all:unset;position:fixed;left:0;top:0;z-index:8;cursor:pointer;display:none;flex-direction:column;align-items:center;gap:8px;transform:translate(-50%,-50%);will-change:transform}
+  .hotspot .sq{position:relative;width:44px;height:44px;border:1.5px solid #FFFEFB;background:rgba(25,25,24,.35);box-shadow:0 0 0 1px rgba(25,25,24,.25);display:grid;place-items:center}
+  .hotspot .sq::before,.hotspot .sq::after{content:"";position:absolute;background:#FFFEFB}
+  .hotspot .sq::before{width:14px;height:1.5px}.hotspot .sq::after{width:1.5px;height:14px}
+  .hotspot .sq i{position:absolute;inset:-1.5px;border:1.5px solid #FFFEFB;animation:hs-pulse 3.2s cubic-bezier(.2,.6,.3,1) infinite;pointer-events:none}
+  .hotspot .sq i + i{animation-delay:1.6s}
+  .hotspot b{font:600 11px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.04em;color:#FFFEFB;background:#191918;padding:6px 8px;white-space:nowrap}
+  .hotspot:hover .sq{background:rgba(227,25,55,.85);border-color:#FFFEFB}
+  .sect[hidden]{display:none}
+  .panel{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .22s ease,visibility 0s;transition:opacity .22s ease,transform .26s cubic-bezier(.2,.7,.3,1),visibility 0s}
+  .panel,.scheme-pop{background:color-mix(in srgb,var(--bg) 50%,transparent) !important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+  .loader{position:fixed;inset:0;z-index:100;background:#E31937;display:grid;place-items:center;transition:opacity .5s ease,visibility 0s linear .5s}
+  .loader img{width:min(475px,72vw);height:auto;display:block;animation:ld-in .6s ease both}
+  .loader[data-done="true"]{opacity:0;visibility:hidden;pointer-events:none}
+  @keyframes ld-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  /* glow strength = 0.2 → 0.5 as profile inputs are completed (--glow-p: 0 → 1) */
+  three-d-stage{background:transparent !important;--stage-bg:transparent}
+  html{--glow-p:0}
+  body{background:radial-gradient(50% 100% at 50% 100%,rgba(227,25,55,calc(.2 + .3 * var(--glow-p))) 0%,rgba(227,25,55,calc((.2 + .3 * var(--glow-p)) * .4)) 38%,rgba(227,25,55,0) 100%) 50% 100%/min(1400px,120vw) 46vh no-repeat fixed,var(--bg);transition:background .6s ease}
+  .ctrls{transition:opacity .22s ease,visibility 0s}
+  .actions-r{position:fixed;right:16px;top:50%;transform:translateY(-50%);z-index:10;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+  .preview-btn.cta{background:#E31937;border-color:#E31937;color:#FFFEFB}
+  .preview-btn.cta:hover{background:#c41530;border-color:#c41530;color:#FFFEFB}
+  .preview-btn.ghost-btn{border-color:rgba(128,128,126,.6);color:#FFFEFB;background:transparent}
+  :root:not([data-theme="dark"]) .preview-btn.ghost-btn{color:var(--fg)}
+  .preview-btn.ghost-btn:hover{border-color:var(--fg)}
+  body:has(.panel[data-open="true"]) .ctrls{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .22s ease,visibility 0s linear .22s}
+  .panel[data-open="false"]{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .22s ease,visibility 0s linear .22s,transform .26s cubic-bezier(.2,.7,.3,1);transform:translate(-8px,-50%)}
+  .hotspot.hs-sm .sq{width:29px;height:29px}
+  .hotspot{position:fixed}
+  .hotspot b{position:absolute;top:50%;right:calc(100% + 8px);transform:translateY(-50%)}
+  #scheme-hotspot b{right:auto;left:calc(100% + 8px)}
+  .hotspot .sq{opacity:.8;transition:opacity .15s,background .2s}
+  .hotspot:hover .sq,.hotspot:focus-visible .sq,.hotspot[aria-expanded="true"] .sq{opacity:1}
+  .hotspot .sq:has(svg)::before,.hotspot .sq:has(svg)::after{display:none}
+  .hotspot .sq svg{display:block}
+  .hotspot.hs-sm .sq::before{width:9px}.hotspot.hs-sm .sq::after{height:9px}
+  .hotspot.hs-sm[aria-expanded="true"] .sq{background:rgba(227,25,55,.85)}
+  .scheme-pop{position:fixed;left:0;top:0;z-index:9;display:flex;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .22s ease,visibility 0s linear .22s;flex-direction:column;gap:10px;padding:12px;background:var(--bg);color:var(--fg);border:1px solid var(--line);will-change:transform}
+  .scheme-pop[data-open="true"]{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .22s ease,visibility 0s}
+  .scheme-pop h2{margin:0;font:600 12px/1.2 "Plus Jakarta Sans",sans-serif}
+  .scaler{position:fixed;left:0;top:0;z-index:9;display:none;flex-direction:column;align-items:stretch;background:rgba(25,25,24,.5);color:#FFFEFB;border:1px solid rgba(255,254,251,.18);transform:translate(-50%,0);will-change:transform;opacity:0;transition:opacity .15s}
+  .scaler[data-show="true"]{opacity:1}
+  .scaler button{all:unset;cursor:pointer;width:30px;height:30px;display:grid;place-items:center;font:500 16px/1 "Plus Jakarta Sans",sans-serif}
+  .scaler button:hover{background:#E31937}
+  .sc-tools{display:flex}
+  .sc-tools .tool + .tool{border-left:1px solid rgba(255,254,251,.18)}
+  .scaler .tool[aria-pressed="true"]{background:#FFFEFB;color:#191918}
+  .scaler svg{display:block;flex:none}
+  .sc-adj{display:flex;align-items:stretch;border-top:1px solid rgba(255,254,251,.18)}
+  .sc-adj[hidden]{display:none}
+  .sc-adj span{flex:1;min-width:0;display:grid;place-items:center;font:500 11px/1 "Plus Jakarta Sans",sans-serif;font-variant-numeric:tabular-nums;border-left:1px solid rgba(255,254,251,.18);border-right:1px solid rgba(255,254,251,.18)}
+  .photo-row{display:flex;gap:12px;align-items:center}
+  .photo-thumb{flex:none;width:48px;height:60px;border:1px solid var(--line);background:repeating-conic-gradient(var(--line) 0 25%,transparent 0 50%) 0 0/8px 8px;display:grid;place-items:end center;overflow:hidden}
+  .photo-thumb img{max-width:100%;max-height:100%;display:block}
+  .photo-row .btns{display:flex;gap:8px;flex:1;min-width:0}
+  .photo-row .btns .btn{flex:1}
+  #adjust-pop{width:240px;box-sizing:border-box}
+  .photo-row .btn{text-align:center;padding:9px 10px}
+  @keyframes hs-pulse{0%{transform:scale(1);opacity:.2}55%{opacity:.18}100%{transform:scale(1.9);opacity:0}}
+  .modal{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(25,25,24,.45);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .22s ease,visibility 0s linear .22s}
+  .modal[data-open="true"]{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .22s ease,visibility 0s}
+  .modal .modal-box,.modal .guide-box{transform:translateY(8px) scale(.985);transition:transform .26s cubic-bezier(.2,.7,.3,1)}
+  .modal[data-open="true"] .modal-box,.modal[data-open="true"] .guide-box{transform:none}
+  .modal-box{width:340px;max-width:calc(100vw - 32px);box-sizing:border-box;background:var(--bg);color:var(--fg);border:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:12px}
+  .modal-head{display:flex;align-items:center;justify-content:space-between}
+  .modal-head h2{margin:0;font:600 13px/1.2 "Plus Jakarta Sans",sans-serif}
+  .x{all:unset;cursor:pointer;width:24px;height:24px;display:grid;place-items:center;font:400 18px/1 "Plus Jakarta Sans",sans-serif;color:var(--muted)}
+  .x:hover{color:var(--fg)}
+  .drop{position:relative;aspect-ratio:4/3;border:1px dashed var(--muted);display:grid;place-items:center;cursor:pointer;overflow:hidden;transition:border-color .2s,background .2s;
+    background:repeating-conic-gradient(var(--line) 0 25%,transparent 0 50%) 0 0/16px 16px}
+  .drop:hover,.drop[data-over="true"]{border-color:var(--fg)}
+  .drop .empty{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:12px;background:var(--bg);border:1px solid var(--line)}
+  .drop .empty strong{font:600 12.5px/1.2 "Plus Jakarta Sans",sans-serif}
+  .drop .empty span{font:400 11px/1.3 "Plus Jakarta Sans",sans-serif;color:var(--muted)}
+  .drop img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+  .drop .busy{position:absolute;inset:0;display:none;place-items:center;background:rgba(25,25,24,.55);color:#FFFEFB;font:500 12px/1 "Plus Jakarta Sans",sans-serif}
+  .drop[data-busy="true"] .busy{display:grid}
+  .tip{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;background:rgba(227,25,55,.1);border:1px solid rgba(227,25,55,.35)}
+  .tip b{flex:none;font:700 10px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#FFFEFB;background:#E31937;padding:4px 6px;margin-top:1px}
+  .tip span{font:400 12px/1.45 "Plus Jakarta Sans",sans-serif;color:var(--fg);text-wrap:pretty}
+  .tip a{color:#E31937;font-weight:600;text-decoration:underline;text-underline-offset:2px}
+  .tip a:hover{color:var(--fg)}
+  .guide-box.ex-box{width:min(720px,calc(100vw - 32px));min-width:0}
+  .ex-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:24px;align-items:start}
+  @media (max-width:640px){.ex-body{grid-template-columns:1fr}}
+  .ex-preview{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px;background:repeating-conic-gradient(var(--line) 0 25%,transparent 0 50%) 0 0/14px 14px;border:1px solid var(--line)}
+  .ex-preview img{width:100%;max-width:240px;aspect-ratio:54/85.6;display:block;border-radius:5.5%/3.5%;box-shadow:0 12px 30px rgba(25,25,24,.22),0 0 0 1px rgba(25,25,24,.08)}
+  .ex-preview small{white-space:nowrap;font:500 11px/1 "Plus Jakarta Sans",sans-serif;color:var(--muted);letter-spacing:.02em}
+  .ex-menu{display:flex;flex-direction:column;gap:16px}
+  .seg{display:flex;border:1px solid var(--line)}
+  .seg button{all:unset;flex:1;text-align:center;cursor:pointer;padding:10px 8px;font:500 12px/1 "Plus Jakarta Sans",sans-serif;color:var(--muted);white-space:nowrap;transition:background .15s,color .15s}
+  .seg button + button{border-left:1px solid var(--line)}
+  .seg button:hover{color:var(--fg)}
+  .seg button[aria-checked="true"]{background:var(--fg);color:var(--bg)}
+  .ex-meta{font:400 11.5px/1.5 "Plus Jakarta Sans",sans-serif;color:var(--muted)}
+  .ex-actions{display:flex;gap:8px;margin-top:auto}
+  .ex-drive{display:flex;flex-direction:column;gap:12px;padding:14px;background:rgba(227,25,55,.1);border:1px solid rgba(227,25,55,.45)}
+  .ex-drive-step{display:flex;gap:10px;align-items:flex-start}
+  .ex-drive-step b{flex:none;font:700 10px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#FFFEFB;background:#E31937;padding:4px 6px;margin-top:1px}
+  .ex-drive-step span{font:500 12.5px/1.45 "Plus Jakarta Sans",sans-serif;color:var(--fg);text-wrap:pretty}
+  .ex-menu a.ex-drive-btn{display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;background:#E31937;border-color:#E31937;color:#FFFEFB;font-weight:600}
+  .ex-menu a.ex-drive-btn:hover{background:#c41530;border-color:#c41530;color:#FFFEFB}
+  .ex-actions .btn{flex:1;text-align:center}
+  .ex-actions .btn.cta-red{background:#E31937;border-color:#E31937;color:#FFFEFB}
+  .ex-actions .btn.cta-red:hover{background:#c41530;border-color:#c41530;color:#FFFEFB}
+  .status{font:400 11px/1.35 "Plus Jakarta Sans",sans-serif;color:var(--muted);min-height:15px}
+  .actions{display:flex;gap:8px;justify-content:flex-end}
+  .btn{all:unset;cursor:pointer;font:500 12px/1 "Plus Jakarta Sans",sans-serif;padding:10px 14px;border:1px solid var(--line);color:var(--fg);transition:border-color .2s,background .2s,color .2s}
+  .btn:hover{border-color:var(--fg)}
+  .btn.primary{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+  .btn.primary:hover{background:#E31937;border-color:#E31937;color:#FFFEFB}
+  .btn[disabled]{opacity:.35;pointer-events:none}
+  .btn.ghost{margin-right:auto}
+  .guide-box{width:50vw;min-width:min(560px,calc(100vw - 32px));max-width:calc(100vw - 32px);max-height:calc(100vh - 32px);overflow:auto;box-sizing:border-box;background:var(--bg);color:var(--fg);border:1px solid var(--line);padding:24px;display:flex;flex-direction:column;gap:20px}
+  .guide-box h2{margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:600 18px/1.2 "Plus Jakarta Sans",sans-serif}
+  .guide-box .modal-head{gap:12px;padding-bottom:4px}
+  .guide-item{display:flex;flex-direction:column;gap:10px}
+  .guide-item img{width:100%;height:auto;display:block;border:1px solid var(--line)}
+  .guide-tag{display:flex;align-items:center;gap:8px;font:600 12px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.06em;text-transform:uppercase}
+  .guide-tag i{width:18px;height:18px;display:grid;place-items:center;font:700 12px/1 "Plus Jakarta Sans",sans-serif;font-style:normal;color:#FFFEFB}
+  .guide-tag.do i{background:#1F8A4C}.guide-tag.dont i{background:#E31937}.guide-tag.check i{background:#191918;box-shadow:inset 0 0 0 1px rgba(255,254,251,.4)}
+  .sel-box{padding:0;gap:0;max-height:min(760px,calc(100vh - 32px))}
+  .sel-box .modal-head{padding:20px 24px 14px;border-bottom:1px solid var(--line)}
+  .sel-scroll{overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:28px;scroll-behavior:smooth}
+  .sel-step{display:flex;flex-direction:column;gap:12px}
+  .sel-step + .sel-step{padding-top:28px;border-top:1px solid var(--line)}
+  .sel-meta{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .sel-meta small{font:500 11px/1 "Plus Jakarta Sans",sans-serif;color:var(--muted);letter-spacing:.04em}
+  .sel-step h3{margin:0;font:600 15px/1.3 "Plus Jakarta Sans",sans-serif}
+  .sel-step ul{margin:0;padding:0 0 0 18px;display:flex;flex-direction:column;gap:6px;font:400 13px/1.5 "Plus Jakarta Sans",sans-serif;text-wrap:pretty}
+  .sel-step img{width:100%;height:auto;display:block;border:1px solid var(--line)}
+  .sel-foot{padding:14px 24px;border-top:1px solid var(--line);display:flex;align-items:center;gap:12px}
+  .sel-hint{font:500 11px/1.3 "Plus Jakarta Sans",sans-serif;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .sel-box[data-done="true"] .sel-hint{display:none}
+  .sel-box .x[disabled]{opacity:.3;pointer-events:none}
+  .guide-item p{margin:0;font:400 13px/1.45 "Plus Jakarta Sans",sans-serif;text-wrap:pretty}
+  .gm-skip{margin-right:auto;display:flex;align-items:center;gap:8px;cursor:pointer;font:500 12px/1.2 "Plus Jakarta Sans",sans-serif;color:var(--fg);user-select:none}
+  .gm-skip input{position:absolute;opacity:0;pointer-events:none}
+  .gm-skip s{flex:none;width:14px;height:14px;box-sizing:border-box;border:1px solid var(--muted);transition:background .15s,border-color .15s}
+  .gm-skip:hover s{border-color:var(--fg)}
+  .gm-skip input:checked + s{background:var(--fg);border-color:var(--fg);box-shadow:inset 0 0 0 2.5px var(--bg)}
+  .gm-skip input:focus-visible + s{outline:2px solid var(--fg);outline-offset:2px}
+  .icon-btn{all:unset;cursor:pointer;flex:none;width:34px;display:grid;place-items:center;border:1px solid var(--line);font:600 13px/1 "Plus Jakarta Sans",sans-serif;color:var(--fg);transition:border-color .2s}
+  .icon-btn:hover{border-color:var(--fg)}
+</style>
+<script>document.documentElement.dataset.theme = localStorage.getItem('idcard-theme') || 'light';</script>
+</head>
+<body>
+<div class="loader" id="loader" aria-hidden="true"><img src="assets/loading.png" alt="" width="475" height="38"></div>
+<script>if (sessionStorage.getItem('idcard-skip-loader')) { sessionStorage.removeItem('idcard-skip-loader'); document.getElementById('loader').remove(); }</script>
+<three-d-stage name="id-card-lanyard"></three-d-stage>
+<aside class="panel" id="profile-panel" data-open="false">
+ <section class="sect">
+  <h2>ID Profile</h2>
+  <label class="field"><span>Name</span><input class="input" id="pf-name" type="text" placeholder="Full name" maxlength="40" autocomplete="off"></label>
+  <label class="field"><span>Job Title</span><input class="input" id="pf-title" type="text" placeholder="Job title" maxlength="48" autocomplete="off"></label>
+  <div class="field">
+    <span>Region</span>
+    <div class="dd" id="pf-country" data-open="false">
+      <button class="input" type="button" aria-haspopup="listbox"><b class="ph">Select country</b><i></i></button>
+      <div class="dd-pop">
+        <input class="input dd-search" type="text" placeholder="Search country or code" autocomplete="off">
+        <ul role="listbox"></ul>
+      </div>
+    </div>
+  </div>
+  <div class="row"><span>Multi-Department</span><button class="switch" id="pf-multi" role="switch" aria-checked="false" aria-label="Multi-Department"></button></div>
+  <div class="field">
+    <span>Department</span>
+    <div class="dd" id="pf-dept" data-open="false">
+      <button class="input" type="button" aria-haspopup="listbox"><b class="ph">Select department</b><i></i></button>
+      <ul role="listbox"></ul>
+    </div>
+    <div class="hint" id="pf-hint" hidden>Pick up to 2 departments</div>
+  </div>
+  <button class="btn primary" id="pf-save" type="button" style="text-align:center">Save</button>
+ </section>
+</aside>
+<button class="hotspot" id="photo-hotspot" type="button" aria-label="Upload photo"><span class="sq"><i></i><i></i></span><b>Upload Photo</b></button>
+<button class="hotspot hs-sm" id="profile-hotspot" type="button" aria-label="Set profile" aria-expanded="false" aria-controls="profile-panel"><span class="sq"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#FFFEFB" stroke-width="1.4" stroke-linejoin="round"><path d="M10.8 2.2l3 3-8.3 8.3-3.7.7.7-3.7z"/><path d="M9.3 3.7l3 3"/></svg></span><b>Set Profile</b></button>
+<button class="hotspot hs-sm" id="adjust-hotspot" type="button" aria-label="Set photo" aria-expanded="false"><span class="sq"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#FFFEFB" stroke-width="1.4" stroke-linejoin="round"><rect x="1.5" y="3" width="13" height="10"/><circle cx="5.5" cy="6.5" r="1.3"/><path d="M1.5 11.5l4-3.5 3 2.5 2.5-2 3.5 3"/></svg></span><b>Set Photo</b></button>
+<div class="scheme-pop" id="adjust-pop" data-open="false">
+  <h2>Adjust Photo</h2>
+  <div class="photo-row">
+    <div class="btns">
+      <button class="btn primary" id="photo-change" type="button">Change</button>
+      <button class="btn" id="photo-remove" type="button">Remove</button>
+      <button class="icon-btn" id="photo-help" type="button" aria-label="Photo placement guide" title="Photo placement guide">?</button>
+    </div>
+  </div>
+</div>
+<button class="hotspot hs-sm" id="motif-hotspot" type="button" aria-label="Randomize motif"><span class="sq"><i></i><i></i></span><b>Set Motifs</b></button>
+<button class="hotspot hs-sm" id="scheme-hotspot" type="button" aria-label="Set color" aria-expanded="false"><span class="sq"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#FFFEFB" stroke-width="1.4" stroke-linejoin="round"><path d="M8 1.5a6.5 6.5 0 1 0 0 13c1 0 1.5-.6 1.5-1.4 0-1.2-1-1.3-1-2.3 0-.8.6-1.3 1.4-1.3h1.6a3 3 0 0 0 3-3C14.5 3.9 11.6 1.5 8 1.5z"/><circle cx="4.6" cy="7.6" r=".9" fill="#FFFEFB" stroke="none"/><circle cx="6.3" cy="4.6" r=".9" fill="#FFFEFB" stroke="none"/><circle cx="9.8" cy="4.4" r=".9" fill="#FFFEFB" stroke="none"/></svg></span><b>Set Color</b></button>
+<div class="scheme-pop" id="scheme-pop" data-open="false">
+  <h2>Color Scheme</h2>
+  <div class="swatches" role="group" aria-label="Color scheme">
+    <button data-s="a" aria-label="Scheme A"><i style="background:#EDECE9"></i><i style="background:#E31937"></i></button>
+    <button data-s="b" aria-label="Scheme B"><i style="background:#E31937"></i><i style="background:#EDECE9"></i></button>
+    <button data-s="c" aria-label="Scheme C"><i style="background:#191918"></i><i style="background:#E31937"></i></button>
+    <button data-s="d" aria-label="Scheme D"><i style="background:#EDECE9"></i><i style="background:#191918"></i></button>
+    <button data-s="e" aria-label="Scheme E"><i style="background:#E31937"></i><i style="background:#191918"></i></button>
+    <button data-s="f" aria-label="Scheme F"><i style="background:#191918"></i><i style="background:#EDECE9"></i></button>
+  </div>
+</div>
+<div class="scaler" id="photo-scaler" data-show="false">
+  <div class="sc-tools">
+    <button type="button" class="tool" data-k="s" aria-pressed="false" aria-label="Zoom" title="Zoom"><svg width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="6" cy="6" r="4.3"/><path d="M9.2 9.2l3.6 3.6"/></svg></button>
+    <button type="button" class="tool" data-k="c" aria-pressed="false" aria-label="Contrast" title="Contrast"><svg width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="7" cy="7" r="5.5"/><path d="M7 1.5a5.5 5.5 0 0 1 0 11z" fill="currentColor" stroke="none"/></svg></button>
+    <button type="button" class="tool" data-k="b" aria-pressed="false" aria-label="Brightness" title="Brightness"><svg width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square"><circle cx="7" cy="7" r="2.6"/><path d="M7 .8v1.6M7 11.6v1.6M.8 7h1.6M11.6 7h1.6M2.6 2.6l1.1 1.1M10.3 10.3l1.1 1.1M2.6 11.4l1.1-1.1M10.3 3.7l1.1-1.1"/></svg></button>
+    <button type="button" class="tool" id="sc-flip" aria-pressed="false" aria-label="Flip horizontally" title="Flip"><svg width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M7 .8v12.4" stroke-dasharray="1.6 1.4"/><path d="M5.2 3.2L1.2 11h4z"/><path d="M8.8 3.2l4 7.8h-4z" fill="currentColor"/></svg></button>
+  </div>
+  <div class="sc-adj" id="sc-adj" hidden><button type="button" id="sc-minus" aria-label="Decrease">−</button><span id="sc-val">100%</span><button type="button" id="sc-plus" aria-label="Increase">+</button></div>
+</div>
+
+<div class="modal" id="export-modal" data-open="false" role="dialog" aria-modal="true" aria-labelledby="ex-title">
+  <div class="guide-box ex-box">
+    <div class="modal-head"><h2 id="ex-title">Your ID Card</h2><button class="x" id="ex-close" aria-label="Close">×</button></div>
+    <div class="ex-body">
+      <div class="ex-preview"><img id="ex-img" alt="ID card preview"><small>54 × 85.6 mm · ID-1</small></div>
+      <div class="ex-menu">
+        <div class="field"><span>Format</span>
+          <div class="seg" id="ex-format" role="radiogroup">
+            <button type="button" data-v="png" aria-checked="true" role="radio">PNG</button>
+            <button type="button" data-v="jpg" aria-checked="false" role="radio">JPG</button>
+            <button type="button" data-v="pdf" aria-checked="false" role="radio">PDF</button>
+          </div>
+        </div>
+        <div class="field"><span>Resolution</span>
+          <div class="seg" id="ex-res" role="radiogroup">
+            <button type="button" data-v="print" aria-checked="true" role="radio">Print · 300 dpi</button>
+            <button type="button" data-v="max" aria-checked="false" role="radio">Maximum</button>
+          </div>
+        </div>
+        <div class="ex-meta" id="ex-meta"></div>
+        <div class="ex-actions">
+          <button class="btn" id="ex-back" type="button">Back to Edit</button>
+          <button class="btn primary" id="ex-download" type="button">Download</button>
+        </div>
+        <div class="ex-drive">
+          <div class="ex-drive-step"><b>Next step</b><span>Upload your downloaded ID card to our shared drive so it's ready for you to collect at the Istanbul Meeting.</span></div>
+          <a class="btn ex-drive-btn" href="https://drive.google.com/drive/folders/1IHo-0ls6RX7vqLJK20qw8AaRUJYPbAPL?usp=sharing" target="_blank" rel="noopener noreferrer"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 11V2.5M4.5 6L8 2.5 11.5 6M2 11.5v2.5h12v-2.5"/></svg>Upload Your File to Google Drive<svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 2h6v6M10 2L3 9"/></svg></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal" id="restart-modal" data-open="false" role="alertdialog" aria-modal="true" aria-labelledby="rm-title" aria-describedby="rm-msg">
+  <div class="guide-box" style="width:min(420px,calc(100vw - 32px));min-width:0">
+    <div class="modal-head"><h2 id="rm-title">Start over?</h2><button class="x" id="rm-close" aria-label="Close">×</button></div>
+    <p id="rm-msg" style="margin:0;font:400 13px/1.5 'Plus Jakarta Sans',sans-serif;text-wrap:pretty">This clears your photo, profile details and card styling so you can begin fresh. Ready for a clean slate?</p>
+    <div class="actions"><button class="btn" id="rm-cancel" type="button">Keep my card</button><button class="btn primary" id="rm-ok" type="button">Yes, start over</button></div>
+  </div>
+</div>
+<div class="modal" id="sel-modal" data-open="false" role="dialog" aria-modal="true" aria-labelledby="sm-title">
+  <div class="guide-box sel-box" id="sel-box" data-done="false">
+    <div class="modal-head"><h2 id="sm-title">Photo Selection Guide</h2><button class="x" id="sm-close" aria-label="Close" disabled>×</button></div>
+    <div class="sel-scroll" id="sel-scroll">
+      <section class="sel-step">
+        <div class="sel-meta"><div class="guide-tag do"><i>✓</i>Do</div><small>Step 1 of 3</small></div>
+        <h3>Pick your best front-facing photo</h3>
+        <ul>
+          <li>Choose a clear, front-facing picture of yourself, framed from the shoulders up.</li>
+          <li>Don't worry about the background — we'll remove it for you automatically.</li>
+        </ul>
+        <img src="assets/sel-do.png" alt="Two good examples: front-facing, shoulders-up portraits">
+      </section>
+      <section class="sel-step">
+        <div class="sel-meta"><div class="guide-tag dont"><i>✕</i>Don't</div><small>Step 2 of 3</small></div>
+        <h3>A few things to avoid</h3>
+        <ul>
+          <li>Turning away from the camera — facing forward keeps you easy to recognise.</li>
+          <li>Accessories that cover your face, like sunglasses — colleagues should be able to identify you.</li>
+          <li>Overly playful poses — relaxed is great, but let's keep it professional.</li>
+        </ul>
+        <img src="assets/sel-dont.png" alt="Two examples to avoid: a side profile, and sunglasses covering the face">
+      </section>
+      <section class="sel-step">
+        <div class="sel-meta"><div class="guide-tag check"><i>!</i>Make Sure</div><small>Step 3 of 3</small></div>
+        <h3>Check before you upload</h3>
+        <ul>
+          <li>Your photo is sharp, high-resolution and not too small.</li>
+          <li>Colours look natural — skip heavy edits such as filters, tints or black &amp; white.</li>
+        </ul>
+        <img src="assets/sel-check.png" alt="Two examples to avoid: a blurry photo, and a heavily tinted photo">
+      </section>
+    </div>
+    <div class="sel-foot">
+      <label class="gm-skip"><input type="checkbox" id="sm-skip"><s></s>Don't show this again</label>
+      <span class="sel-hint" id="sm-hint">Scroll to the end to continue ↓</span>
+      <button class="btn primary" id="sm-ok" type="button" disabled>Continue to Upload</button>
+    </div>
+  </div>
+</div>
+<div class="modal" id="guide-modal" data-open="false" role="dialog" aria-modal="true" aria-labelledby="gm-title">
+  <div class="guide-box sel-box" id="gm-box" data-done="false">
+    <div class="modal-head"><h2 id="gm-title">Photo Placement Guide</h2><button class="x" id="gm-close" aria-label="Close" disabled>×</button></div>
+    <div class="sel-scroll" id="gm-scroll">
+      <section class="sel-step">
+        <div class="sel-meta"><div class="guide-tag do"><i>✓</i>Do</div><small>Step 1 of 2</small></div>
+        <h3>Find a balanced fit in the frame</h3>
+        <ul>
+          <li>Position yourself proportionally — head and shoulders centred, with a little breathing room around you.</li>
+          <li>Use the references below as a guide. You can drag the photo and use the zoom control to fine-tune it.</li>
+        </ul>
+        <img src="assets/place-do.png" alt="Three well-placed examples: head and shoulders centred and proportional in the frame">
+      </section>
+      <section class="sel-step">
+        <div class="sel-meta"><div class="guide-tag dont"><i>✕</i>Don't</div><small>Step 2 of 2</small></div>
+        <h3>Placements to avoid</h3>
+        <ul>
+          <li>Zooming in so far that your face fills the whole frame.</li>
+          <li>Shrinking yourself so you look too small in the frame.</li>
+          <li>Moving off to one side, partly out of the frame.</li>
+        </ul>
+        <img src="assets/place-dont.png" alt="Three examples to avoid: face too close, too small, and pushed off to the side">
+      </section>
+    </div>
+    <div class="sel-foot">
+      <label class="gm-skip"><input type="checkbox" id="gm-skip"><s></s>Don't show this again</label>
+      <span class="sel-hint">Scroll to the end to continue ↓</span>
+      <button class="btn primary" id="gm-ok" type="button" disabled>Got it</button>
+    </div>
+  </div>
+</div>
+<div class="modal" id="photo-modal" data-open="false" role="dialog" aria-modal="true" aria-labelledby="pm-title">
+  <div class="modal-box">
+    <div class="modal-head"><h2 id="pm-title">Upload Photo</h2><button class="x" id="pm-close" aria-label="Close">×</button></div>
+    <div class="drop" id="pm-drop" tabindex="0" data-busy="false">
+      <div class="empty" id="pm-empty"><strong>Click to upload or drop a photo</strong><span>or paste an image (Ctrl/⌘ + V)</span></div>
+      <img id="pm-preview" alt="" hidden>
+      <div class="busy">Removing background…</div>
+    </div>
+    <input id="pm-file" type="file" accept="image/*" hidden>
+    <div class="tip"><b>Tip</b><span>No photo ready? Copy one from <a href="https://www.openenergytransition.org/about-us#our-team" target="_blank" rel="noopener noreferrer">OET's Team Page</a> and paste it here.</span></div>
+    <div class="status" id="pm-status">JPG, PNG or WebP. The background is removed automatically.</div>
+    <div class="actions">
+      <button class="btn ghost" id="pm-remove" type="button" hidden>Remove photo</button>
+      <button class="btn" id="pm-cancel" type="button">Cancel</button>
+      <button class="btn primary" id="pm-use" type="button" disabled>Use Photo</button>
+    </div>
+  </div>
+</div>
+<div class="actions-r">
+  <button class="preview-btn cta" id="save-btn" type="button"><span class="ic"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1.5v9M4.5 7L8 10.5 11.5 7M2 12.5v2h12v-2"/></svg></span>Save &amp; Get ID Card</button>
+  <button class="preview-btn ghost-btn" id="restart-btn" type="button"><span class="ic"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2.5 8a5.5 5.5 0 1 0 1.7-4"/><path d="M2.5 1.8v2.8h2.8"/></svg></span>Restart</button>
+</div>
+<script src="countries.js"></script>
+<script>
+(() => {
+  const DEPTS = ['Senior Leadership', 'Finance', 'People & Culture', 'Software Engineering', 'Modelling Tools & Data', 'Energy System Modeling', 'Grid Data', 'Research & Market Development'];
+  const KEY = 'idcard-profile';
+  const p = Object.assign({ name: '', title: '', region: '', multi: false, depts: [] }, JSON.parse(localStorage.getItem(KEY) || '{}'));
+  window.idProfile = p;
+  const $ = id => document.getElementById(id);
+  const name = $('pf-name'), title = $('pf-title'), multi = $('pf-multi'), dd = $('pf-dept'), hint = $('pf-hint');
+  const btn = dd.querySelector('button'), label = btn.querySelector('b'), list = dd.querySelector('ul');
+  const emit = () => { localStorage.setItem(KEY, JSON.stringify(p)); window.dispatchEvent(new CustomEvent('profilechange', { detail: p })); };
+  const render = () => {
+    multi.setAttribute('aria-checked', p.multi); hint.hidden = !p.multi;
+    label.textContent = p.depts.length ? p.depts.join(' / ') : (p.multi ? 'Select up to 2' : 'Select department');
+    label.classList.toggle('ph', !p.depts.length);
+    list.setAttribute('aria-multiselectable', p.multi);
+    list.innerHTML = '';
+    DEPTS.forEach(d => {
+      const li = document.createElement('li'), sel = p.depts.includes(d);
+      li.setAttribute('role', 'option'); li.setAttribute('aria-selected', sel);
+      if (p.multi && !sel && p.depts.length >= 2) li.setAttribute('aria-disabled', 'true');
+      li.innerHTML = (p.multi ? '<s></s>' : '') + '<span></span>'; li.lastChild.textContent = d;
+      li.onclick = e => {
+        e.stopPropagation();
+        if (li.getAttribute('aria-disabled') === 'true') return;
+        if (p.multi) { p.depts = sel ? p.depts.filter(x => x !== d) : [...p.depts, d]; }
+        else { p.depts = [d]; dd.dataset.open = 'false'; }
+        render(); emit();
+      };
+      list.appendChild(li);
+    });
+  };
+  name.value = p.name; title.value = p.title;
+  // Region: ISO 3166-1 alpha-3 country picker
+  const cdd = $('pf-country'), cbtn = cdd.querySelector('button'), clabel = cbtn.querySelector('b'),
+        csearch = cdd.querySelector('.dd-search'), clist = cdd.querySelector('ul');
+  if (p.region && !COUNTRIES.some(c => c.code === p.region)) p.region = '';
+  const renderCountry = () => {
+    const c = COUNTRIES.find(c => c.code === p.region);
+    clabel.textContent = c ? c.name + ' (' + c.a2 + ' - ' + c.cont + ')' : 'Select country';
+    clabel.classList.toggle('ph', !c);
+    const q = csearch.value.trim().toLowerCase();
+    clist.innerHTML = '';
+    COUNTRIES.filter(c => !q || c.name.toLowerCase().includes(q) || c.code.toLowerCase().startsWith(q) || c.a2.toLowerCase() === q).forEach(c => {
+      const li = document.createElement('li');
+      li.setAttribute('role', 'option'); li.setAttribute('aria-selected', c.code === p.region);
+      li.innerHTML = '<span></span><em></em>'; li.firstChild.textContent = c.name; li.lastChild.textContent = c.a2;
+      li.onclick = e => { e.stopPropagation(); p.region = c.code; cdd.dataset.open = 'false'; csearch.value = ''; renderCountry(); emit(); };
+      clist.appendChild(li);
+    });
+  };
+  csearch.oninput = renderCountry;
+  csearch.onclick = e => e.stopPropagation();
+  csearch.onkeydown = e => { if (e.key === 'Enter') { const li = clist.querySelector('li'); li && li.click(); } };
+  cbtn.onclick = e => {
+    e.stopPropagation(); dd.dataset.open = 'false';
+    const open = cdd.dataset.open !== 'true'; cdd.dataset.open = open;
+    if (open) { csearch.value = ''; renderCountry(); csearch.focus(); const s = clist.querySelector('[aria-selected="true"]'); if (s) clist.scrollTop = s.offsetTop - 80; }
+  };
+  document.addEventListener('click', e => { if (!cdd.contains(e.target)) cdd.dataset.open = 'false'; });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') cdd.dataset.open = 'false'; });
+  renderCountry();
+  name.oninput = () => { p.name = name.value; emit(); };
+  title.oninput = () => { p.title = title.value; emit(); };
+  multi.onclick = () => { p.multi = !p.multi; if (!p.multi) p.depts = p.depts.slice(0, 1); render(); emit(); };
+  btn.onclick = e => { e.stopPropagation(); document.getElementById('pf-country').dataset.open = 'false'; dd.dataset.open = dd.dataset.open === 'true' ? 'false' : 'true'; };
+  document.addEventListener('click', e => { if (!dd.contains(e.target)) dd.dataset.open = 'false'; });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') dd.dataset.open = 'false'; });
+  render();
+})();
+</script>
+<div class="ctrls" id="ctrls">
+<button class="preview-btn" id="theme-btn" type="button" aria-label="Toggle light/dark mode"><span class="ic" id="theme-ic"></span><span id="theme-label">Light</span></button>
+<button class="preview-btn" id="preview-btn" type="button" aria-pressed="false"><span class="ic"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 8s2.6-5 7-5 7 5 7 5-2.6 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2.2"/></svg></span>Preview Card</button>
+</div>
+<script>
+  const SUN = '<svg width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square"><circle cx="7" cy="7" r="2.6"/><path d="M7 .8v1.6M7 11.6v1.6M.8 7h1.6M11.6 7h1.6M2.6 2.6l1.1 1.1M10.3 10.3l1.1 1.1M2.6 11.4l1.1-1.1M10.3 3.7l1.1-1.1"/></svg>';
+  const MOON = '<svg width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M11.8 8.6A5.3 5.3 0 0 1 5.4 2.2a5.3 5.3 0 1 0 6.4 6.4z"/></svg>';
+  const syncTheme = () => {
+    const dark = document.documentElement.dataset.theme === 'dark';
+    document.getElementById('theme-ic').innerHTML = dark ? MOON : SUN;
+    document.getElementById('theme-label').textContent = dark ? 'Dark' : 'Light';
+  };
+  document.getElementById('theme-btn').onclick = () => {
+    const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = t; localStorage.setItem('idcard-theme', t); syncTheme();
+  };
+  syncTheme();
+  const tw = () => document.documentElement.style.setProperty('--ctrls-w', document.getElementById('ctrls').offsetWidth + 'px');
+  tw(); document.fonts.ready.then(tw);
+</script>
+<script src="three-d-stage.js"></script>
+<script type="module">
+const stage = document.querySelector('three-d-stage');
+const { THREE } = await stage.ready;
+stage._toolbar.style.display = 'none';
+
+const mat = (name, color, roughness, metalness = 0) => {
+  const m = new THREE.MeshStandardMaterial({ color, roughness, metalness });
+  m.name = name; return m;
+};
+const M = {
+  holder: mat('holder_black_plastic', 0x1b1b1d, 0.45),
+  card: mat('card_white', 0xf2f2f0, 0.6),
+  clear: mat('design_clearspace', 0xffffff, 0.55),
+  strap: mat('lanyard_red', 0xe31937, 0.85),
+  metal: mat('grommet_metal', 0xd4d7dc, 0.28, 0.35),
+  metalDark: mat('grommet_inner', 0x8a8e95, 0.4, 0.3),
+};
+const mesh = (name, geo, m) => { const o = new THREE.Mesh(geo, m); o.name = name; return o; };
+
+// dimensions (m)
+const CW = 0.054, CH = 0.0856, CR = 0.003, CT = 0.00076;       // ID-1 card
+const W = 0.030, H = 0.047, R = 0.004;                        // holder half-extents
+const TAB_TOP = 0.0615, TAB_BW = 0.0195, TAB_TW = 0.0125;
+const SLOT = { x: 0.0085, y0: 0.0535, y1: 0.0585 };
+const BACK_Z0 = -0.002, BACK_D = 0.0025, RIM_D = 0.0015;
+const WIN = { x: CW / 2 + 0.0005, y: CH / 2 + 0.0005, r: CR + 0.0003 };
+
+function rrect(path, x0, y0, x1, y1, r) {
+  path.moveTo(x0 + r, y0);
+  path.lineTo(x1 - r, y0); path.quadraticCurveTo(x1, y0, x1, y0 + r);
+  path.lineTo(x1, y1 - r); path.quadraticCurveTo(x1, y1, x1 - r, y1);
+  path.lineTo(x0 + r, y1); path.quadraticCurveTo(x0, y1, x0, y1 - r);
+  path.lineTo(x0, y0 + r); path.quadraticCurveTo(x0, y0, x0 + r, y0);
+  return path;
+}
+const ext = (shape, depth, bevel = 0.0003) => new THREE.ExtrudeGeometry(shape, {
+  depth, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 3, curveSegments: 24,
+});
+
+const model = new THREE.Group(); model.name = 'id_card_lanyard';
+const card = new THREE.Group(); card.name = 'badge'; model.add(card);
+
+// holder back plate with top tab + strap slot
+const back = new THREE.Shape();
+back.moveTo(-W + R, -H);
+back.lineTo(W - R, -H); back.quadraticCurveTo(W, -H, W, -H + R);
+back.lineTo(W, H - R); back.quadraticCurveTo(W, H, W - R, H);
+back.lineTo(TAB_BW, H);
+back.lineTo(TAB_TW + 0.0015, TAB_TOP - 0.0005); back.quadraticCurveTo(TAB_TW, TAB_TOP, TAB_TW - 0.0015, TAB_TOP);
+back.lineTo(-TAB_TW + 0.0015, TAB_TOP); back.quadraticCurveTo(-TAB_TW, TAB_TOP, -TAB_TW - 0.0015, TAB_TOP - 0.0005);
+back.lineTo(-TAB_BW, H);
+back.lineTo(-W + R, H); back.quadraticCurveTo(-W, H, -W, H - R);
+back.lineTo(-W, -H + R); back.quadraticCurveTo(-W, -H, -W + R, -H);
+back.holes.push(rrect(new THREE.Path(), -SLOT.x, SLOT.y0, SLOT.x, SLOT.y1, 0.0012));
+const backMesh = mesh('holder_back', ext(back, BACK_D), M.holder);
+backMesh.position.z = BACK_Z0;
+card.add(backMesh);
+
+// front rim framing the window
+const rim = rrect(new THREE.Shape(), -W, -H, W, H, R);
+rim.holes.push(rrect(new THREE.Path(), -WIN.x, -WIN.y, WIN.x, WIN.y, WIN.r));
+const rimMesh = mesh('holder_front_rim', ext(rim, RIM_D - 0.0003), M.holder);
+rimMesh.position.z = BACK_Z0 + BACK_D + 0.0003;
+card.add(rimMesh);
+
+// side retention clips
+for (const s of [-1, 1]) {
+  const clip = mesh(s < 0 ? 'holder_clip_left' : 'holder_clip_right',
+    new THREE.BoxGeometry(0.0022, 0.03, 0.0048), M.holder);
+  clip.position.set(s * (W + 0.0004), -0.004, BACK_Z0 + 0.0022);
+  card.add(clip);
+}
+
+// plain card
+const cardZ = BACK_Z0 + BACK_D + 0.0001;
+const cardMesh = mesh('id_card', ext(rrect(new THREE.Shape(), -CW / 2, -CH / 2, CW / 2, CH / 2, CR), CT, 0), M.card);
+cardMesh.position.z = cardZ;
+card.add(cardMesh);
+
+// clearspace: exact 54 × 85.6 mm face, UVs 0–1 across the card
+const csGeo = new THREE.ShapeGeometry(rrect(new THREE.Shape(), -CW / 2, -CH / 2, CW / 2, CH / 2, CR), 24);
+const uv = csGeo.attributes.uv, pos = csGeo.attributes.position;
+for (let i = 0; i < uv.count; i++) uv.setXY(i, (pos.getX(i) + CW / 2) / CW, (pos.getY(i) + CH / 2) / CH);
+const clearspace = mesh('design_clearspace', csGeo, M.clear);
+clearspace.position.z = cardZ + CT + 0.0001;
+card.add(clearspace);
+
+// lanyard: loop through slot + short plies on the badge
+const SW = 0.015, ST = 0.0008;
+const zc = BACK_Z0 + BACK_D / 2, lr = BACK_D / 2 + ST / 2 + 0.0002;
+const loopY = SLOT.y0 + lr + ST / 2, ATTACH_Y = 0.074;
+const arc = new THREE.Shape();
+arc.absarc(0, 0, lr + ST / 2, Math.PI, 2 * Math.PI, false);
+arc.absarc(0, 0, lr - ST / 2, 2 * Math.PI, Math.PI, true);
+const loopGeo = new THREE.ExtrudeGeometry(arc, { depth: SW, bevelEnabled: false, curveSegments: 32 });
+loopGeo.rotateY(Math.PI / 2); loopGeo.translate(-SW / 2, 0, 0);
+const loop = mesh('lanyard_loop', loopGeo, M.strap);
+loop.position.set(0, loopY, zc);
+card.add(loop);
+if (false) for (const [name, dz] of [['lanyard_ply_front', lr], ['lanyard_ply_back', -lr]]) {
+  const len = ATTACH_Y - loopY + 0.001;
+  const p = mesh(name, new THREE.BoxGeometry(SW, len, ST), M.strap);
+  p.position.set(0, loopY + len / 2, zc + dz);
+  card.add(p);
+}
+
+// rope segments (two plies each), posed every frame by the sim
+const SEGS = 16, ROPE_LEN = CH * 1.5 - (ATTACH_Y - SLOT.y0), SEG = ROPE_LEN / SEGS;
+const rope = new THREE.Group(); rope.name = 'lanyard'; model.add(rope);
+const SAMPLES = 72;
+// logo pattern texture for the front face of the front ply
+const LOGO_H = 0.009, LOGO_L = LOGO_H * 103 / 47, PERIOD = LOGO_L * 2;
+const pxPerM = 256 / SW;
+const lc = document.createElement('canvas');
+lc.width = 256; lc.height = Math.round(PERIOD * pxPerM);
+const lctx = lc.getContext('2d');
+lctx.fillStyle = '#E31937'; lctx.fillRect(0, 0, lc.width, lc.height);
+const logoTex = new THREE.CanvasTexture(lc);
+const logoImg = new Image();
+logoImg.onload = () => {
+  lctx.save(); lctx.translate(lc.width / 2, lc.height * 0.75); lctx.rotate(-Math.PI / 2);
+  const w = LOGO_L * pxPerM, h = LOGO_H * pxPerM;
+  lctx.drawImage(logoImg, -w / 2, -h / 2, w, h); lctx.restore();
+  logoTex.needsUpdate = true;
+};
+logoImg.src = 'assets/oet-logo.png';
+logoTex.colorSpace = THREE.SRGBColorSpace; logoTex.wrapT = THREE.RepeatWrapping; logoTex.anisotropy = 8;
+const strapLogo = new THREE.MeshStandardMaterial({ map: logoTex, roughness: 0.85 }); strapLogo.name = 'lanyard_red_logo';
+// continuous ribbon per ply: 4 faces x 2 verts per sample, rebuilt every frame
+const FACES = [[[-1, 1], [1, 1], [0, 0, 1]], [[1, 1], [1, -1], [1, 0, 0]], [[1, -1], [-1, -1], [0, 0, -1]], [[-1, -1], [-1, 1], [-1, 0, 0]]];
+const plies = [['lanyard_front', lr], ['lanyard_back', -lr]].map(([name, dz]) => {
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(SAMPLES * 8 * 3), nor = new Float32Array(SAMPLES * 8 * 3), uvs = new Float32Array(SAMPLES * 8 * 2), idx = [];
+  for (let f = 0; f < 4; f++) for (let s = 0; s < SAMPLES - 1; s++) {
+    const a = s * 8 + f * 2, b = a + 1, c = a + 8, d = b + 8;
+    idx.push(a, b, c, b, d, c);
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
+  geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3).setUsage(THREE.DynamicDrawUsage));
+  geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2).setUsage(THREE.DynamicDrawUsage));
+  geo.setIndex(idx);
+  const front = dz > 0;
+  if (front) { const n = (SAMPLES - 1) * 6; geo.addGroup(0, n, 1); geo.addGroup(n, n * 3, 0); }
+  const m = mesh(name, geo, front ? [M.strap, strapLogo] : M.strap); m.frustumCulled = false;
+  rope.add(m);
+  return { m, dz, pos, nor, uvs };
+});
+const curve = new THREE.CatmullRomCurve3([], false, 'centripetal');
+
+// ---------- physics: verlet rope + rigid badge triangle ----------
+const V = THREE.Vector3;
+const restLocal = [new V(0, ATTACH_Y, zc), new V(-W, -H, 0), new V(W, -H, 0)]; // A,B,C
+const P = [], W_ = [];
+const addP = (v, w) => { P.push({ x: v.clone(), o: v.clone() }); W_.push(w); return P.length - 1; };
+restLocal.forEach(v => addP(v, 0.2));
+const chain = [0];
+for (let i = 1; i <= SEGS; i++) chain.push(addP(new V(0, ATTACH_Y + i * SEG, zc), i === SEGS ? 0 : 1));
+const C = [];
+const link = (i, j, k = 1) => C.push({ i, j, r: P[i].x.distanceTo(P[j].x), k });
+link(0, 1); link(0, 2); link(1, 2);
+for (let i = 0; i < SEGS; i++) link(chain[i], chain[i + 1]);
+link(chain[1], 1, 0.5); link(chain[1], 2, 0.5);   // strap stiffness at the slot
+link(chain[2], 0, 0.5);                             // bend stiffness
+
+const frame = (a, b, c) => {
+  const x = c.clone().sub(b).normalize();
+  const t = a.clone().sub(b.clone().add(c).multiplyScalar(0.5));
+  const z = new V().crossVectors(x, t).normalize();
+  const y = new V().crossVectors(z, x);
+  return new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
+};
+const qRestInv = frame(...restLocal).invert();
+const centroidLocal = restLocal[0].clone().add(restLocal[1]).add(restLocal[2]).divideScalar(3);
+
+let groundY = -H - 0.035;
+const G = new V(0, -2.2, 0), DT = 1 / 120, DAMP = 0.968, FACE_K = 0.006;
+const UP = new V(0, 1, 0);
+function faceUser(k) {
+  const b = P[1].x, c = P[2].x;
+  const m = b.clone().add(c).multiplyScalar(0.5);
+  const f = stage._camera.position.clone().sub(m); f.y = 0;
+  if (f.lengthSq() < 1e-8) return;
+  const xd = new V().crossVectors(UP, f.normalize());
+  const tc = m.clone().addScaledVector(xd, W), tb = m.clone().addScaledVector(xd, -W);
+  tc.y = c.y; tb.y = b.y;
+  c.lerp(tc, k); b.lerp(tb, k);
+}
+let grab = null;
+
+function step() {
+  const g2 = G.clone().multiplyScalar(DT * DT);
+  for (let n = 0; n < 2; n++) {
+    P.forEach((p, i) => {
+      if (!W_[i] || (grab && grab.rope === i)) return;
+      const v = p.x.clone().sub(p.o).multiplyScalar(DAMP);
+      p.o.copy(p.x); p.x.add(v).add(g2);
+    });
+    for (let it = 0; it < 30; it++) {
+      for (const c of C) {
+        const a = P[c.i].x, b = P[c.j].x, wa = W_[c.i], wb = W_[c.j];
+        if (!(wa + wb)) continue;
+        const d = b.clone().sub(a), L = d.length() || 1e-9;
+        const f = ((L - c.r) / L) * c.k / (wa + wb);
+        a.addScaledVector(d, f * wa); b.addScaledVector(d, -f * wb);
+      }
+      if (grab) {
+        if (grab.rope != null) P[grab.rope].x.copy(grab.target);
+        else {
+          const cur = new V(); let den = 0;
+          grab.bary.forEach((w, i) => { cur.addScaledVector(P[i].x, w); den += w * w * W_[i]; });
+          const corr = grab.target.clone().sub(cur);
+          grab.bary.forEach((w, i) => P[i].x.addScaledVector(corr, 0.2 * w * W_[i] / den));
+        }
+      }
+      faceUser(grab ? FACE_K * 0.2 : FACE_K);
+      P.forEach(p => { if (p.x.y < groundY + 0.001) p.x.y = groundY + 0.001; });
+    }
+  }
+  pose();
+}
+
+const X0 = new V(1, 0, 0);
+function pose() {
+  const [a, b, c] = [P[0].x, P[1].x, P[2].x];
+  card.quaternion.copy(frame(a, b, c)).multiply(qRestInv);
+  const cen = a.clone().add(b).add(c).divideScalar(3);
+  card.position.copy(cen).sub(centroidLocal.clone().applyQuaternion(card.quaternion));
+  const cardX = X0.clone().applyQuaternion(card.quaternion);
+  const pts = chain.map(i => P[i].x.clone());
+  pts[0] = new V(0, loopY, zc).applyQuaternion(card.quaternion).add(card.position);
+  pts.splice(1, 0, new V(0, ATTACH_Y, zc).applyQuaternion(card.quaternion).add(card.position));
+  curve.points = pts;
+  const p = new V(), y = new V(), x = new V(), z = new V(), o = new V();
+  const L = curve.getLength();
+  for (let s = 0; s < SAMPLES; s++) {
+    const t = s / (SAMPLES - 1);
+    curve.getPointAt(t, p); curve.getTangentAt(t, y);
+    const v = (t * L - 0.012) / PERIOD;
+    x.copy(cardX).lerp(X0, t); x.addScaledVector(y, -x.dot(y)).normalize();
+    z.crossVectors(x, y);
+    for (const ply of plies) {
+      for (let f = 0; f < 4; f++) {
+        const [c0, c1, n] = FACES[f];
+        const nx = x.x * n[0] + z.x * n[2], ny = x.y * n[0] + z.y * n[2], nz = x.z * n[0] + z.z * n[2];
+        [c0, c1].forEach((c, k) => {
+          o.copy(p).addScaledVector(x, c[0] * SW / 2).addScaledVector(z, ply.dz + c[1] * ST / 2);
+          const j = (s * 8 + f * 2 + k) * 3;
+          ply.pos[j] = o.x; ply.pos[j + 1] = o.y; ply.pos[j + 2] = o.z;
+          ply.nor[j] = nx; ply.nor[j + 1] = ny; ply.nor[j + 2] = nz;
+          const q = (s * 8 + f * 2 + k) * 2;
+          ply.uvs[q] = (c[0] + 1) / 2; ply.uvs[q + 1] = v;
+        });
+      }
+    }
+  }
+  for (const ply of plies) {
+    const g = ply.m.geometry;
+    g.attributes.position.needsUpdate = g.attributes.normal.needsUpdate = g.attributes.uv.needsUpdate = true;
+    g.computeBoundingSphere();
+  }
+}
+pose();
+
+stage.setObject(model);
+{ // dismiss loader once the scene + card face are ready (min 3s)
+  const ld = document.getElementById('loader') || document.createElement('div'), t0 = performance.now();
+  const done = () => setTimeout(() => { ld.dataset.done = 'true'; setTimeout(() => ld.remove(), 600); }, Math.max(0, 3000 - (performance.now() - t0)));
+  Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 2500))]).then(() => requestAnimationFrame(() => requestAnimationFrame(done)));
+}
+stage._ground.position.y = groundY;
+stage._ground.visible = false;
+model.traverse(o => { if (o.isMesh) o.castShadow = o.receiveShadow = false; });
+stage._camera.position.set(0.12886, 0.00456, 0.22766);
+stage._controls.target.set(0.0083, 0.01532, 0.00452);
+stage._controls.maxDistance = 0.3225;
+stage._controls.enablePan = false;
+{ const pol = new THREE.Spherical().setFromVector3(stage._camera.position.clone().sub(stage._controls.target)).phi;
+  stage._controls.minPolarAngle = stage._controls.maxPolarAngle = pol; }
+stage._controls.mouseButtons.RIGHT = null;
+stage._controls.touches.TWO = THREE.TOUCH.DOLLY_ROTATE;
+stage._renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
+stage._controls.update();
+
+const initial = P.map(p => p.x.clone());
+const nudge = () => { P[1].o.z -= 0.0006; P[2].o.z -= 0.001; };
+nudge();
+window.resetSwing = () => {
+  P.forEach((p, i) => { p.x.copy(initial[i]); p.o.copy(initial[i]); }); nudge();
+};
+
+const loopFn = stage._loop;
+stage._loop = () => { step(); loopFn(); window.__hotspot && window.__hotspot(); };
+stage._renderer.setAnimationLoop(stage._loop);
+
+// ---------- grabbing ----------
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), plane = new THREE.Plane();
+const canvas = stage._renderer.domElement;
+const cast = e => {
+  const r = canvas.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, stage._camera);
+};
+// photo reposition: hit on the card face inside the photo, within the top section
+let photoDrag = null;
+window.__photoHover = false;
+const facePt = hit => hit && hit.object === clearspace && hit.uv ? { x: hit.uv.x * SV_W, y: (1 - hit.uv.y) * SV_H } : null;
+const onPhoto = hit => {
+  const f = facePt(hit), rc = window.__photoRect;
+  return !!(!window.__preview && window.__photo && f && rc && f.y < BOT && f.x >= rc.x0 && f.x <= rc.x1 && f.y >= Math.max(0, rc.y0) && f.y <= rc.y1);
+};
+stage.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  cast(e);
+  const hit = ray.intersectObject(model, true)[0];
+  if (!hit) return;
+  e.stopPropagation(); e.preventDefault();
+  if (onPhoto(hit)) {
+    const f = facePt(hit), xf = window.__photoXf;
+    photoDrag = { fx: f.x, fy: f.y, x: xf.x, y: xf.y };
+    window.__photoToolOff && window.__photoToolOff();
+    stage._controls.enabled = false; canvas.style.cursor = 'grabbing';
+    stage.setPointerCapture(e.pointerId);
+    return;
+  }
+  let isRope = false; hit.object.traverseAncestors(o => { if (o === rope) isRope = true; });
+  grab = { target: hit.point.clone() };
+  if (isRope) {
+    let best = 1, bd = Infinity;
+    for (let i = 1; i < SEGS; i++) { const d = P[chain[i]].x.distanceTo(hit.point); if (d < bd) { bd = d; best = chain[i]; } }
+    grab.rope = best; grab.target.copy(P[best].x);
+  } else {
+    const l = card.worldToLocal(hit.point.clone());
+    const [a, b, c] = restLocal;
+    const det = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
+    const wa = ((b.y - c.y) * (l.x - c.x) + (c.x - b.x) * (l.y - c.y)) / det;
+    const wb = ((c.y - a.y) * (l.x - c.x) + (a.x - c.x) * (l.y - c.y)) / det;
+    grab.bary = [wa, wb, 1 - wa - wb];
+  }
+  plane.setFromNormalAndCoplanarPoint(stage._camera.getWorldDirection(new V()).negate(), grab.target);
+  stage._controls.enabled = false;
+  canvas.style.cursor = 'grabbing';
+  stage.setPointerCapture(e.pointerId);
+}, { capture: true });
+let lastMove = null;
+const baryOf = pt => {
+  const l = card.worldToLocal(pt.clone());
+  const [a, b, c] = restLocal;
+  const det = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
+  const wa = ((b.y - c.y) * (l.x - c.x) + (c.x - b.x) * (l.y - c.y)) / det;
+  const wb = ((c.y - a.y) * (l.x - c.x) + (a.x - c.x) * (l.y - c.y)) / det;
+  return [wa, wb, 1 - wa - wb];
+};
+function hoverPush(e, hit) {
+  const now = performance.now();
+  const prev = lastMove; lastMove = { x: e.clientX, y: e.clientY, t: now };
+  if (!hit || !prev || now - prev.t > 100) return;
+  const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+  const speed = Math.min(Math.hypot(dx, dy) / 40, 1);
+  if (speed < 0.02) return;
+  const cam = stage._camera;
+  const right = new V().setFromMatrixColumn(cam.matrixWorld, 0), up = new V().setFromMatrixColumn(cam.matrixWorld, 1);
+  const imp = ray.ray.direction.clone().multiplyScalar(0.6)
+    .addScaledVector(right, dx / Math.hypot(dx, dy) * 0.4).addScaledVector(up, -dy / Math.hypot(dx, dy) * 0.4)
+    .multiplyScalar(0.000546 * speed);
+  let isRope = false; hit.object.traverseAncestors(o => { if (o === rope) isRope = true; });
+  if (isRope) {
+    for (let i = 1; i < SEGS; i++) {
+      const d = P[chain[i]].x.distanceTo(hit.point);
+      if (d < 0.02) P[chain[i]].o.addScaledVector(imp, -(1 - d / 0.02));
+    }
+  } else baryOf(hit.point).forEach((w, i) => P[i].o.addScaledVector(imp, -w));
+}
+stage.addEventListener('pointermove', e => {
+  cast(e);
+  if (photoDrag) {
+    const f = facePt(ray.intersectObject(clearspace, false)[0]);
+    if (f) { const xf = window.__photoXf; xf.x = photoDrag.x + f.x - photoDrag.fx; xf.y = photoDrag.y + f.y - photoDrag.fy; window.__photoXfChanged(); }
+    return;
+  }
+  if (grab) { ray.ray.intersectPlane(plane, grab.target); return; }
+  const hit = ray.intersectObject(model, true)[0];
+  const overPhoto = onPhoto(hit);
+  window.__photoHover = overPhoto;
+  canvas.style.cursor = overPhoto ? 'move' : hit ? 'grab' : '';
+  if (!overPhoto) hoverPush(e, hit);
+});
+const release = () => {
+  if (photoDrag) { photoDrag = null; stage._controls.enabled = true; canvas.style.cursor = ''; return; }
+  if (!grab) return;
+  if (grab.rope != null) P[grab.rope].o.copy(P[grab.rope].x);
+  grab = null; stage._controls.enabled = true; canvas.style.cursor = '';
+};
+stage.addEventListener('pointerup', release);
+stage.addEventListener('pointercancel', release);
+stage.addEventListener('pointerleave', () => { window.__photoHover = false; });
+window.__photoDragging = () => !!photoDrag;
+
+// ---------- card face compositor ----------
+// Layer stack, bottom → top: scheme base, profile typography, OET logo (always last).
+// Layout units = source SVG units (383 × 577); bottom section starts at y 414.32.
+const SV_W = 383, SV_H = 577, BOT = 414.32;
+const BOX = {
+  name:   { x: 16.22, y: BOT,       w: 259.3, h: 102 },
+  role:   { x: 16.22, y: BOT + 102, w: 275.5 + 91.7 - 16.22, h: SV_H - BOT - 102 }, // spans to region's right edge
+  region: { x: 275.5, y: BOT,       w: 91.7,  h: 102 },
+};
+const PAD = 12;
+const INK = { a: '#FFFEFB', b: '#191918', c: '#FFFEFB', d: '#FFFEFB', e: '#FFFEFB', f: '#191918' };
+const FONT = '"Plus Jakarta Sans", sans-serif';
+const faceCv = document.createElement('canvas');
+faceCv.width = 1400; faceCv.height = Math.round(1400 * CH / CW);
+const faceCtx = faceCv.getContext('2d');
+const faceTex = new THREE.CanvasTexture(faceCv);
+faceTex.colorSpace = THREE.SRGBColorSpace; faceTex.anisotropy = 8;
+M.clear.map = faceTex; M.clear.needsUpdate = true;
+const SX = faceCv.width / SV_W, SY = faceCv.height / SV_H;
+
+const imgCache = {};
+const loadImg = src => imgCache[src] || (imgCache[src] = new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }));
+const fontsReady = Promise.all(['500', '600', '700'].map(w => document.fonts.load(w + ' 24px "Plus Jakarta Sans"'))).catch(() => {});
+
+function wrap(ctx, text, maxW, maxLines) {
+  const words = text.split(/\s+/).filter(Boolean), lines = [];
+  let cur = '';
+  for (const w of words) {
+    const t = cur ? cur + ' ' + w : w;
+    if (ctx.measureText(t).width <= maxW || !cur) cur = t; else { lines.push(cur); cur = w; }
+  }
+  if (cur) lines.push(cur);
+  return lines.length <= maxLines && lines.every(l => ctx.measureText(l).width <= maxW) ? lines : null;
+}
+// fit text in unit space; returns {lines,size} at the largest size that fits
+function fit(ctx, text, weight, maxW, maxH, sizes, lh, maxLines) {
+  for (const size of sizes) {
+    ctx.font = weight + ' ' + size * SX + 'px ' + FONT;
+    const lines = wrap(ctx, text, maxW * SX, maxLines);
+    if (lines && lines.length * size * lh <= maxH) return { lines, size };
+  }
+  const size = sizes[sizes.length - 1];
+  ctx.font = weight + ' ' + size * SX + 'px ' + FONT;
+  return { lines: [text], size };
+}
+// largest size (binary search) whose wrapped text fills maxW × maxH within maxLines
+function fitMax(ctx, text, weight, maxW, maxH, lh, maxLines) {
+  let lo = 4, hi = maxH / lh, best = null;
+  for (let i = 0; i < 18; i++) {
+    const size = (lo + hi) / 2;
+    ctx.font = weight + ' ' + size * SX + 'px ' + FONT;
+    const lines = wrap(ctx, text, maxW * SX, maxLines);
+    if (lines && lines.length * size * lh <= maxH) { best = { lines, size }; lo = size; } else hi = size;
+  }
+  return best || fit(ctx, text, weight, maxW, maxH, [lo], lh, maxLines);
+}
+// draw lines; x,y in layout units (y = top of first line)
+function drawLines(ctx, block, weight, x, y, lh, align = 'left') {
+  ctx.font = weight + ' ' + block.size * SX + 'px ' + FONT;
+  ctx.textAlign = align; ctx.textBaseline = 'top';
+  block.lines.forEach((l, i) => ctx.fillText(l, x * SX, (y + i * block.size * lh + block.size * (lh - 1) / 2) * SY));
+  return block.lines.length * block.size * lh;
+}
+
+let schemeId = localStorage.getItem('idcard-scheme') || 'a', composeReq = 0;
+async function compose() {
+  const req = ++composeReq, id = schemeId;
+  const [base, logo, placeholder] = await Promise.all([loadImg('assets/bg-' + id + '-base.svg'), loadImg('assets/logo-' + id + '.svg'), loadImg('assets/placeholder-snoop-v2.png'), fontsReady]);
+  if (req !== composeReq) return;
+  const ctx = faceCtx, p = window.idProfile || {};
+  ctx.clearRect(0, 0, faceCv.width, faceCv.height);
+  ctx.drawImage(base, 0, 0, faceCv.width, faceCv.height);
+  // motif layers — the "back" one is drawn here (behind the photo), the "front" one right after the photo
+  const mf = window.__motif;
+  const drawMotif = async side => {
+    const mi = await loadImg('assets/motif-' + mf[side] + '.svg');
+    const mw = mi.width * 0.75, mh = mi.height * 0.75;
+    const mx = side === 'left' ? 0 : SV_W - mw, my = (BOT - mh) / 2;
+    ctx.drawImage(mi, mx * SX, my * SY, mw * SX, mh * SY);
+  };
+  const motifImgs = mf ? await Promise.all([loadImg('assets/motif-' + mf.left + '.svg'), loadImg('assets/motif-' + mf.right + '.svg')]) : null;
+  if (req !== composeReq) return;
+  if (mf) await drawMotif(mf.front === 'left' ? 'right' : 'left');
+  // photo layer — top section, bottom-centred on the section divider
+  window.__photoRect = null;
+  {
+    const isPh = !window.__photo, ph = window.__photo || placeholder, aspect = ph.width / ph.height;
+    const xf = isPh ? { x: 0, y: 0, s: 1 } : (window.__photoXf || { x: 0, y: 0, s: 1 });
+    let hPx = BOT * 0.8 * SY, wPx = hPx * aspect;
+    const maxW = SV_W * 0.92 * SX;
+    if (wPx > maxW) { wPx = maxW; hPx = wPx / aspect; }
+    wPx *= xf.s; hPx *= xf.s;
+    const px0 = (faceCv.width - wPx) / 2 + xf.x * SX, py0 = BOT * SY - hPx + xf.y * SY;
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, faceCv.width, BOT * SY); ctx.clip();
+    ctx.filter = 'brightness(' + (1 + (xf.b || 0) / 100) + ') contrast(' + (1 + (xf.c || 0) / 100) + ')';
+    if (xf.f) { ctx.translate(px0 * 2 + wPx, 0); ctx.scale(-1, 1); }
+    ctx.drawImage(ph, px0, py0, wPx, hPx);
+    ctx.filter = 'none'; ctx.globalAlpha = 1;
+    ctx.restore();
+    if (mf) await drawMotif(mf.front);
+    if (!isPh) window.__photoRect = { x0: px0 / SX, y0: py0 / SY, x1: (px0 + wPx) / SX, y1: (py0 + hPx) / SY };
+  }
+
+  const ink = INK[id], ghost = 0.8;
+  const val = (v, ph) => v && v.trim() ? [v.trim(), 1] : [ph, ghost];
+
+  // RED — name, top-left, 8pt padding
+  { const b = BOX.name, [t, a] = val(p.name, 'Snoopy F');
+    ctx.fillStyle = ink; ctx.globalAlpha = a;
+    const blk = fitMax(ctx, t, 700, b.w - PAD * 2, b.h - PAD * 2 - 4, 1.04, 3);
+    drawLines(ctx, blk, 700, b.x + PAD, b.y + PAD + 4, 1.04); }
+
+  // GREEN — job title, department beneath, top-left, 8pt padding
+  { const b = BOX.role, [t, a] = val(p.title, 'Visionary, Head of Wellbeing');
+    const depts = (p.depts || []).length ? p.depts : ['Senior Leadership'], da = (p.depts || []).length ? 1 : ghost;
+    const iw = b.w - PAD * 2, ih = b.h - PAD; // no top padding
+    let tb, db, gap = 3;
+    // job title: one line, scaled so it spans the full container width (capped by available height)
+    ctx.font = '500 ' + 10 * SX + 'px ' + FONT;
+    const tsW = Math.floor(10 * iw * SX / ctx.measureText(t).width * 20) / 20;
+    for (let ts = tsW; ts >= 6; ts -= 0.05) {
+      ctx.font = '500 ' + ts * SX + 'px ' + FONT;
+      tb = { lines: [t], size: ts };
+      const ds = Math.max(8, ts / 1.25 - 3);
+      db = fit(ctx, depts.slice(0, 2).join('  |  '), 500, iw, ih, [ds, ds - 0.5, ds - 1, ds - 1.5, ds - 2].filter(s => s >= 7), 1.25, 1);
+      if (tb.lines.length * ts * 1.2 + gap + db.lines.length * db.size * 1.25 <= ih) break;
+    }
+    ctx.fillStyle = ink; ctx.globalAlpha = a;
+    const used = drawLines(ctx, tb, 500, b.x + PAD, b.y, 1.2);
+    ctx.globalAlpha = da * 0.8;
+    drawLines(ctx, db, 500, b.x + PAD, b.y + used + gap, 1.25); }
+
+  // BLUE — region "CC - CT" (ISO alpha-2 - continent), center-center
+  { const b = BOX.region, ctry = (window.COUNTRIES || []).find(c => c.code === p.region);
+    const [t, a] = val(ctry ? ctry.a2 + ' - ' + ctry.cont : '', 'ID - AS');
+    ctx.fillStyle = ink; ctx.globalAlpha = a;
+    const blk = fit(ctx, t, 700, b.w - PAD * 2, b.h - PAD * 2, [22, 20, 18, 17, 16, 15, 14], 1.08, 1);
+    drawLines(ctx, blk, 700, b.x + b.w / 2, b.y + b.h / 2 - blk.size * 1.08 / 2, 1.08, 'center'); }
+
+  ctx.globalAlpha = 1;
+  ctx.drawImage(logo, 0, 0, faceCv.width, faceCv.height);
+  faceTex.needsUpdate = true;
+}
+let composeRaf = 0;
+const requestCompose = () => { clearTimeout(composeRaf); composeRaf = setTimeout(compose, 0); };
+window.addEventListener('profilechange', requestCompose);
+// glow progress: photo, name, job title, region, department — each adds 1/5
+const updateGlow = () => {
+  const p = window.idProfile || {};
+  const n = [!!window.__photo, !!(p.name || '').trim(), !!(p.title || '').trim(), !!p.region, (p.depts || []).length > 0].filter(Boolean).length;
+  animateGlow(n / 5);
+};
+let glowCur = 0, glowRaf = 0;
+function animateGlow(target) {
+  cancelAnimationFrame(glowRaf);
+  const from = glowCur, t0 = performance.now();
+  const tick = now => {
+    const k = Math.min(1, (now - t0) / 600), e = 1 - Math.pow(1 - k, 3);
+    glowCur = from + (target - from) * e;
+    document.documentElement.style.setProperty('--glow-p', glowCur.toFixed(4));
+    if (k < 1) glowRaf = requestAnimationFrame(tick);
+  };
+  glowRaf = requestAnimationFrame(tick);
+}
+window.__updateGlow = updateGlow;
+window.addEventListener('profilechange', updateGlow);
+updateGlow();
+
+const schemeBtns = document.querySelectorAll('.swatches button');
+function setScheme(id) {
+  schemeId = id;
+  schemeBtns.forEach(b => b.setAttribute('aria-pressed', b.dataset.s === id));
+  localStorage.setItem('idcard-scheme', id);
+  requestCompose();
+}
+schemeBtns.forEach(b => b.onclick = () => setScheme(b.dataset.s));
+setScheme(schemeId);
+
+// ---------- save / restart ----------
+// ---------- export ----------
+{
+  const em = document.getElementById('export-modal'), exImg = document.getElementById('ex-img'), exMeta = document.getElementById('ex-meta');
+  const MM_W = 54, MM_H = 85.6, opt = { format: 'png', res: 'print' };
+  const dims = () => opt.res === 'print' ? [Math.round(MM_W / 25.4 * 300), Math.round(MM_H / 25.4 * 300)] : [faceCv.width, faceCv.height];
+  const fileBase = () => { const p = window.idProfile || {}; return ((p.name || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'oet') + '-id-card'; };
+  const syncMeta = () => {
+    const [w, hh] = dims();
+    exMeta.textContent = (opt.format === 'pdf' ? 'PDF at true card size (54 × 85.6 mm), image ' : '') + w + ' × ' + hh + ' px' + (opt.format === 'png' ? ' · lossless' : opt.format === 'jpg' ? ' · smaller file' : '') + ' — ' + fileBase() + '.' + opt.format;
+  };
+  const seg = (id, key) => document.querySelectorAll('#' + id + ' button').forEach(b => b.onclick = () => {
+    opt[key] = b.dataset.v; document.querySelectorAll('#' + id + ' button').forEach(x => x.setAttribute('aria-checked', x === b)); syncMeta();
+  });
+  seg('ex-format', 'format'); seg('ex-res', 'res');
+  const close = () => { em.dataset.open = 'false'; };
+  document.getElementById('save-btn').onclick = async () => {
+    await compose();
+    exImg.src = faceCv.toDataURL('image/png'); syncMeta(); em.dataset.open = 'true';
+  };
+  document.getElementById('ex-close').onclick = close;
+  document.getElementById('ex-back').onclick = close;
+  em.addEventListener('pointerdown', e => { if (e.target === em) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && em.dataset.open === 'true') close(); });
+
+  const render = () => {
+    const [w, hh] = dims(), c = document.createElement('canvas'); c.width = w; c.height = hh;
+    const x = c.getContext('2d'); x.imageSmoothingQuality = 'high';
+    if (opt.format !== 'png') { x.fillStyle = '#fff'; x.fillRect(0, 0, w, hh); }
+    x.drawImage(faceCv, 0, 0, w, hh); return c;
+  };
+  const toBlob = (c, type, q) => new Promise(res => c.toBlob(res, type, q));
+  const pdfFromJpeg = async (jpg, w, hh) => {
+    const bytes = new Uint8Array(await jpg.arrayBuffer()), enc = new TextEncoder();
+    const W = (MM_W / 25.4 * 72).toFixed(2), H = (MM_H / 25.4 * 72).toFixed(2);
+    const content = 'q ' + W + ' 0 0 ' + H + ' 0 0 cm /Im0 Do Q';
+    const parts = [], offs = []; let len = 0;
+    const push = p => { const u = typeof p === 'string' ? enc.encode(p) : p; parts.push(u); len += u.length; };
+    const obj = (n, body) => { offs[n] = len; push(n + ' 0 obj\n'); body(); push('\nendobj\n'); };
+    push('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+    obj(1, () => push('<< /Type /Catalog /Pages 2 0 R >>'));
+    obj(2, () => push('<< /Type /Pages /Kids [3 0 R] /Count 1 >>'));
+    obj(3, () => push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + W + ' ' + H + '] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>'));
+    obj(4, () => { push('<< /Type /XObject /Subtype /Image /Width ' + w + ' /Height ' + hh + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + bytes.length + ' >>\nstream\n'); push(bytes); push('\nendstream'); });
+    obj(5, () => push('<< /Length ' + content.length + ' >>\nstream\n' + content + '\nendstream'));
+    const xref = len;
+    push('xref\n0 6\n0000000000 65535 f \n' + [1, 2, 3, 4, 5].map(n => String(offs[n]).padStart(10, '0') + ' 00000 n \n').join(''));
+    push('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF');
+    return new Blob(parts, { type: 'application/pdf' });
+  };
+  document.getElementById('ex-download').onclick = async () => {
+    await compose();
+    const c = render();
+    const blob = opt.format === 'png' ? await toBlob(c, 'image/png')
+      : opt.format === 'jpg' ? await toBlob(c, 'image/jpeg', 0.95)
+      : await pdfFromJpeg(await toBlob(c, 'image/jpeg', 0.95), c.width, c.height);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = fileBase() + '.' + opt.format;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+  };
+}
+{
+  const rm = document.getElementById('restart-modal');
+  const rmClose = () => { rm.dataset.open = 'false'; };
+  document.getElementById('restart-btn').onclick = () => { rm.dataset.open = 'true'; document.getElementById('rm-cancel').focus(); };
+  document.getElementById('rm-close').onclick = rmClose;
+  document.getElementById('rm-cancel').onclick = rmClose;
+  rm.addEventListener('pointerdown', e => { if (e.target === rm) rmClose(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && rm.dataset.open === 'true') rmClose(); });
+  document.getElementById('rm-ok').onclick = () => restartAll();
+}
+function restartAll() {
+  ['idcard-guide-seen', 'idcard-selguide-seen', 'idcard-profile', 'idcard-photo', 'idcard-photo-xf', 'idcard-scheme', 'idcard-motif', 'idcard-motif-2'].forEach(k => localStorage.removeItem(k));
+  sessionStorage.setItem('idcard-skip-loader', '1');
+  location.reload();
+}
+
+// ---------- photo upload ----------
+{
+  const hs = document.getElementById('photo-hotspot'), modal = document.getElementById('photo-modal');
+  const drop = document.getElementById('pm-drop'), fileIn = document.getElementById('pm-file');
+  const empty = document.getElementById('pm-empty'), prev = document.getElementById('pm-preview');
+  const status = document.getElementById('pm-status'), useBtn = document.getElementById('pm-use'), rmBtn = document.getElementById('pm-remove');
+  const DEFAULT_STATUS = status.textContent;
+  const scaler = document.getElementById('photo-scaler'), scVal = document.getElementById('sc-val');
+  try { window.__photoXf = Object.assign({ x: 0, y: 0, s: 1, c: 0, b: 0, o: 100, f: false }, JSON.parse(localStorage.getItem('idcard-photo-xf') || '{}')); } catch (e) { window.__photoXf = { x: 0, y: 0, s: 1, c: 0, b: 0 }; }
+  // photo tools: zoom / opacity / brightness open a − value + row; flip toggles directly
+  const scAdj = document.getElementById('sc-adj'), flipBtn = document.getElementById('sc-flip'), tools = scaler.querySelectorAll('.tool[data-k]');
+  let activeTool = null;
+  const fmt = { s: v => Math.round(v * 100) + '%', c: v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(Math.round(v)), b: v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(Math.round(v)) };
+  const syncAdj = () => {
+    const xf = window.__photoXf;
+    tools.forEach(t => t.setAttribute('aria-pressed', t.dataset.k === activeTool));
+    flipBtn.setAttribute('aria-pressed', !!xf.f);
+    scAdj.hidden = !activeTool;
+    if (activeTool) scVal.textContent = fmt[activeTool](xf[activeTool] ?? 0);
+  };
+  window.__photoXfChanged = () => { localStorage.setItem('idcard-photo-xf', JSON.stringify(window.__photoXf)); syncAdj(); requestCompose(); };
+  window.__photoToolOff = () => { if (activeTool) { activeTool = null; syncAdj(); } };
+  tools.forEach(t => t.onclick = () => { activeTool = activeTool === t.dataset.k ? null : t.dataset.k; syncAdj(); });
+  flipBtn.onclick = () => { window.__photoXf.f = !window.__photoXf.f; window.__photoXfChanged(); };
+  const step = dir => {
+    const xf = window.__photoXf;
+    if (activeTool === 's') xf.s = Math.min(3, Math.max(0.4, +(xf.s * (dir > 0 ? 1.1 : 1 / 1.1)).toFixed(3)));
+    else if (activeTool === 'c') xf.c = Math.min(100, Math.max(-100, (xf.c || 0) + dir * 10));
+    else if (activeTool === 'b') xf.b = Math.min(100, Math.max(-100, (xf.b || 0) + dir * 10));
+    window.__photoXfChanged();
+  };
+  document.getElementById('sc-plus').onclick = () => step(1);
+  document.getElementById('sc-minus').onclick = () => step(-1);
+  let scHover = false, scHideAt = 0;
+  scaler.onpointerenter = () => { scHover = true; }; scaler.onpointerleave = () => { scHover = false; };
+  syncAdj();
+  const SC_LOCAL = new THREE.Vector3(), SCH_LOCAL = new THREE.Vector3(), PRF_LOCAL = new THREE.Vector3();
+  const adjHs = document.getElementById('adjust-hotspot'), adjPop = document.getElementById('adjust-pop'), ADJ_LOCAL = new THREE.Vector3();
+  function setAdjustPop(o) { adjPop.dataset.open = o; adjHs.setAttribute('aria-expanded', o); }
+  adjHs.onclick = e => { e.stopPropagation(); setAdjustPop(adjPop.dataset.open !== 'true'); };
+  document.addEventListener('pointerdown', e => { if (adjPop.dataset.open === 'true' && !adjPop.contains(e.target) && !adjHs.contains(e.target)) setAdjustPop(false); }, true);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') setAdjustPop(false); });
+  // motifs: one of four, random type + random placement in the top section
+  const MOTIFS = ['a', 'b', 'c', 'd'];
+  // two motifs: one centre-left, one centre-right (distinct types); one sits in front of the photo, one behind
+  const rollMotif = () => { const s = [...MOTIFS].sort(() => Math.random() - 0.5); return { left: s[0], right: s[1], front: Math.random() < 0.5 ? 'left' : 'right' }; };
+  try { window.__motif = JSON.parse(localStorage.getItem('idcard-motif-2')) || rollMotif(); } catch (e) { window.__motif = rollMotif(); }
+  const mtHs = document.getElementById('motif-hotspot'), MT_LOCAL = new THREE.Vector3();
+  const saveMotif = () => { localStorage.setItem('idcard-motif-2', JSON.stringify(window.__motif)); requestCompose(); };
+  mtHs.onclick = e => {
+    e.stopPropagation();
+    const prev = window.__motif; let n;
+    do { n = rollMotif(); } while (n.left === prev.left && n.right === prev.right && n.front === prev.front);
+    window.__motif = n; saveMotif();
+  };
+  saveMotif();
+  const setMotifPop = () => {};
+  const prfHs = document.getElementById('profile-hotspot'), prfPanel = document.getElementById('profile-panel');
+  // Preview Card: hide every editing control and close anything open
+  const pvBtn = document.getElementById('preview-btn');
+  pvBtn.onclick = () => {
+    const on = document.documentElement.dataset.preview !== 'true';
+    document.documentElement.dataset.preview = on; pvBtn.setAttribute('aria-pressed', on); window.__preview = on;
+    if (on) {
+      setSchemePop(false); setAdjustPop(false); setMotifPop(false); window.__photoToolOff && window.__photoToolOff();
+      prfPanel.dataset.open = 'false'; prfHs.setAttribute('aria-expanded', 'false');
+      window.__photoHover = false;
+    }
+  };
+  document.getElementById('pf-save').onclick = () => { prfPanel.dataset.open = 'false'; prfHs.setAttribute('aria-expanded', 'false'); };
+  prfHs.onclick = e => { e.stopPropagation(); const o = prfPanel.dataset.open !== 'true'; prfPanel.dataset.open = o; prfHs.setAttribute('aria-expanded', o); };
+  const schHs = document.getElementById('scheme-hotspot'), schPop = document.getElementById('scheme-pop');
+  const setSchemePop = o => { schPop.dataset.open = o; schHs.setAttribute('aria-expanded', o); };
+  schHs.onclick = e => { e.stopPropagation(); setSchemePop(schPop.dataset.open !== 'true'); };
+  document.addEventListener('pointerdown', e => { if (schPop.dataset.open === 'true' && !schPop.contains(e.target) && !schHs.contains(e.target)) setSchemePop(false); }, true);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') setSchemePop(false); });
+  const pmTitle = document.getElementById('pm-title');
+  document.getElementById('photo-change').onclick = () => { setAdjustPop(false); const go = () => { open(); pmTitle.textContent = 'Change Photo'; }; window.__withSelGuide(go); };
+  document.getElementById('photo-remove').onclick = () => { setAdjustPop(false); setPhoto(null, true); };
+  let pending = null, jobId = 0;
+
+  // hotspot follows the centre of the card's top section
+  const HS_LOCAL = new THREE.Vector3(-CW / 2 - 10 / SV_W * CW, CH / 2 - (BOT / 2 / SV_H) * CH, cardZ + CT + 0.0002);
+  const cvs = stage._renderer.domElement, tmp = new THREE.Vector3(), nrm = new THREE.Vector3(), toCam = new THREE.Vector3();
+  window.__hotspot = () => {
+    card.updateMatrixWorld();
+    tmp.copy(HS_LOCAL).applyMatrix4(card.matrixWorld);
+    nrm.set(0, 0, 1).applyQuaternion(card.quaternion);
+    toCam.copy(stage._camera.position).sub(tmp);
+    const facing = nrm.dot(toCam) > 0 && modal.dataset.open !== 'true' && document.getElementById('guide-modal').dataset.open !== 'true' && document.getElementById('sel-modal').dataset.open !== 'true' && !window.__photo;
+    tmp.project(stage._camera);
+    const rc = cvs.getBoundingClientRect();
+    hs.style.display = facing ? 'flex' : 'none';
+    // colour-scheme hotspot: bottom-left of the card's top section
+    const anyModal = modal.dataset.open === 'true' || document.getElementById('guide-modal').dataset.open === 'true';
+    const faceOk = nrm.dot(toCam) > 0 && !anyModal;
+    SCH_LOCAL.set(CW / 2 - 10 / SV_W * CW, -CH / 2 - 10 / SV_H * CH, cardZ + CT + 0.0002).applyMatrix4(card.matrixWorld).project(stage._camera);
+    const sxp = rc.left + (SCH_LOCAL.x + 1) / 2 * rc.width, syp = rc.top + (1 - SCH_LOCAL.y) / 2 * rc.height;
+    schHs.style.display = faceOk ? 'flex' : 'none';
+    // "Set ID Profile": left edge of the bottom section, vertically centred on it
+    PRF_LOCAL.set(-CW / 2 - 10 / SV_W * CW, CH / 2 - ((BOT + SV_H) / 2) / SV_H * CH, cardZ + CT + 0.0002).applyMatrix4(card.matrixWorld).project(stage._camera);
+    prfHs.style.display = faceOk ? 'flex' : 'none';
+    // "Adjust Photo": left edge of the top section, vertically centred on it (only with a photo)
+    ADJ_LOCAL.set(-CW / 2 - 10 / SV_W * CW, CH / 2 - (BOT / 2) / SV_H * CH, cardZ + CT + 0.0002).applyMatrix4(card.matrixWorld).project(stage._camera);
+    const axp = rc.left + (ADJ_LOCAL.x + 1) / 2 * rc.width, ayp = rc.top + (1 - ADJ_LOCAL.y) / 2 * rc.height;
+    const adjOk = faceOk && !!window.__photo;
+    // "Set Motifs": directly under "Adjust Photo" on the top section's left edge
+    MT_LOCAL.set(-CW / 2 - 10 / SV_W * CW, CH / 2 - (BOT / 2 + 44) / SV_H * CH, cardZ + CT + 0.0002).applyMatrix4(card.matrixWorld).project(stage._camera);
+    const mxp0 = rc.left + (MT_LOCAL.x + 1) / 2 * rc.width, myp0 = rc.top + (1 - MT_LOCAL.y) / 2 * rc.height;
+    // stack under "Adjust Photo" in screen space when it's visible; otherwise take its spot
+    const mxp = adjOk ? axp : rc.left + (ADJ_LOCAL.x + 1) / 2 * rc.width;
+    const myp = adjOk ? ayp - adjHs.offsetHeight - 8 : ayp; // stacked above Set Photo (clear of Set Profile below)
+    mtHs.style.display = adjOk ? 'flex' : 'none';
+    mtHs.style.transform = 'translate(' + mxp + 'px,' + myp + 'px) translate(-50%,-50%)';
+    adjHs.style.display = adjOk ? 'flex' : 'none';
+    adjHs.style.transform = 'translate(' + axp + 'px,' + ayp + 'px) translate(-50%,-50%)';
+    if (!adjOk && adjPop.dataset.open === 'true') setAdjustPop(false);
+    if (adjPop.dataset.open === 'true') {
+      const below = ayp + adjHs.offsetHeight / 2 + 8;
+      adjPop.style.transform = below + adjPop.offsetHeight > innerHeight - 8
+        ? 'translate(' + axp + 'px,' + (ayp - adjHs.offsetHeight / 2 - 8) + 'px) translate(-50%,-100%)'
+        : 'translate(' + axp + 'px,' + below + 'px) translate(-50%,0)';
+    }
+    prfHs.style.transform = 'translate(' + (rc.left + (PRF_LOCAL.x + 1) / 2 * rc.width) + 'px,' + (rc.top + (1 - PRF_LOCAL.y) / 2 * rc.height) + 'px) translate(-50%,-50%)';
+    schHs.style.transform = 'translate(' + sxp + 'px,' + syp + 'px) translate(-50%,-50%)';
+    if (!faceOk && schPop.dataset.open === 'true') setSchemePop(false);
+    if (schPop.dataset.open === 'true') {
+      const below = syp + schHs.offsetHeight / 2 + 8, ph = schPop.offsetHeight;
+      schPop.style.transform = below + ph > innerHeight - 8
+        ? 'translate(' + sxp + 'px,' + (syp - schHs.offsetHeight / 2 - 8) + 'px) translate(-50%,-100%)'
+        : 'translate(' + sxp + 'px,' + below + 'px) translate(-50%,0)';
+    }
+    hs.style.transform = 'translate(' + (rc.left + (tmp.x + 1) / 2 * rc.width) + 'px,' + (rc.top + (1 - tmp.y) / 2 * rc.height) + 'px) translate(-50%,-50%)';
+    // floating scale control above the photo (clamped inside the top section)
+    const pr = window.__photoRect, now = performance.now();
+    const active = window.__photo && nrm.dot(toCam) > 0 && modal.dataset.open !== 'true' && (window.__photoHover || scHover || window.__photoDragging());
+    if (active) scHideAt = now + 700;
+    const show = window.__photo && pr && now < scHideAt && modal.dataset.open !== 'true';
+    scaler.style.display = show ? 'flex' : 'none';
+    scaler.dataset.show = show ? 'true' : 'false';
+    if (show) {
+      const ux = (pr.x0 + pr.x1) / 2, uy = (Math.max(0, pr.y0) + Math.min(BOT, pr.y1)) / 2 + 52;
+      SC_LOCAL.set(ux / SV_W * CW - CW / 2, CH / 2 - uy / SV_H * CH, cardZ + CT + 0.0002).applyMatrix4(card.matrixWorld).project(stage._camera);
+      scaler.style.transform = 'translate(' + (rc.left + (SC_LOCAL.x + 1) / 2 * rc.width) + 'px,' + (rc.top + (1 - SC_LOCAL.y) / 2 * rc.height) + 'px) translate(-50%,0)';
+    }
+  };
+
+  const setPhoto = (img, persist) => {
+    window.__photo = img; window.__updateGlow && window.__updateGlow();
+    if (!img) setAdjustPop(false);
+    pmTitle.textContent = 'Upload Photo';
+    if (persist) try { img ? localStorage.setItem('idcard-photo', img.src) : localStorage.removeItem('idcard-photo'); } catch (e) {}
+    requestCompose();
+  };
+  const saved = localStorage.getItem('idcard-photo');
+  if (saved) { const i = new Image(); i.onload = () => setPhoto(i, false); i.src = saved; }
+
+  const open = () => {
+    pending = null; useBtn.disabled = true; rmBtn.hidden = true; pmTitle.textContent = 'Upload Photo';
+    prev.hidden = true; empty.hidden = false; status.textContent = DEFAULT_STATUS;
+    modal.dataset.open = 'true'; drop.focus();
+  };
+  const close = () => { modal.dataset.open = 'false'; jobId++; drop.dataset.busy = 'false'; fileIn.value = ''; };
+  // placement guide: shown before the first upload, and via the "?" button
+  const gm = document.getElementById('guide-modal');
+  let guideThen = null;
+  const gmSkip = document.getElementById('gm-skip');
+  const gmBox = document.getElementById('gm-box'), gmScroll = document.getElementById('gm-scroll'), gmOk = document.getElementById('gm-ok'), gmX = document.getElementById('gm-close');
+  const gmCheck = () => {
+    if (gmScroll.scrollTop + gmScroll.clientHeight >= gmScroll.scrollHeight - 4 && gmBox.dataset.done !== 'true') { gmBox.dataset.done = 'true'; gmOk.disabled = false; gmX.disabled = false; }
+  };
+  gmScroll.addEventListener('scroll', gmCheck, { passive: true });
+  const openGuide = then => {
+    guideThen = then || null; gmSkip.checked = !!localStorage.getItem('idcard-guide-seen');
+    gmBox.dataset.done = 'false'; gmOk.disabled = true; gmX.disabled = true;
+    gmScroll.style.scrollBehavior = 'auto'; gmScroll.scrollTop = 0; gmScroll.style.scrollBehavior = '';
+    gm.dataset.open = 'true';
+    requestAnimationFrame(gmCheck); [...gmScroll.querySelectorAll('img')].forEach(i => i.complete || i.addEventListener('load', gmCheck, { once: true }));
+  };
+  window.__openPlacementGuide = openGuide;
+  const closeGuide = proceed => {
+    if (gmBox.dataset.done !== 'true') return;
+    gm.dataset.open = 'false';
+    gmSkip.checked ? localStorage.setItem('idcard-guide-seen', '1') : localStorage.removeItem('idcard-guide-seen');
+    const t = guideThen; guideThen = null; if (proceed && t) t();
+  };
+  document.getElementById('gm-ok').onclick = () => closeGuide(true);
+  document.getElementById('gm-close').onclick = () => closeGuide(false);
+  gm.addEventListener('pointerdown', e => { if (e.target === gm) closeGuide(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && gm.dataset.open === 'true') closeGuide(false); });
+  document.getElementById('photo-help').onclick = () => { setAdjustPop(false); openGuide(); };
+  // Photo Selection Guide — shown before every upload until "Don't show this again"; closable only after scrolling to the end
+  const sm = document.getElementById('sel-modal'), smBox = document.getElementById('sel-box'), smScroll = document.getElementById('sel-scroll');
+  const smOk = document.getElementById('sm-ok'), smX = document.getElementById('sm-close'), smSkip = document.getElementById('sm-skip');
+  let selThen = null;
+  const smCheck = () => {
+    const done = smScroll.scrollTop + smScroll.clientHeight >= smScroll.scrollHeight - 4;
+    if (done && smBox.dataset.done !== 'true') { smBox.dataset.done = 'true'; smOk.disabled = false; smX.disabled = false; }
+  };
+  smScroll.addEventListener('scroll', smCheck, { passive: true });
+  const openSel = then => {
+    selThen = then; smBox.dataset.done = 'false'; smOk.disabled = true; smX.disabled = true;
+    smSkip.checked = false; smScroll.style.scrollBehavior = 'auto'; smScroll.scrollTop = 0; smScroll.style.scrollBehavior = '';
+    sm.dataset.open = 'true';
+    requestAnimationFrame(smCheck); [...smScroll.querySelectorAll('img')].forEach(i => i.complete || i.addEventListener('load', smCheck, { once: true }));
+  };
+  const closeSel = proceed => {
+    if (smBox.dataset.done !== 'true') return;
+    sm.dataset.open = 'false';
+    if (smSkip.checked) localStorage.setItem('idcard-selguide-seen', '1');
+    const t = selThen; selThen = null; if (proceed && t) t();
+  };
+  smOk.onclick = () => closeSel(true);
+  smX.onclick = () => closeSel(false);
+  sm.addEventListener('pointerdown', e => { if (e.target === sm) closeSel(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && sm.dataset.open === 'true') closeSel(false); });
+  window.__withSelGuide = go => localStorage.getItem('idcard-selguide-seen') ? go() : openSel(go);
+  hs.onclick = () => window.__withSelGuide(open);
+  document.getElementById('pm-close').onclick = close;
+  document.getElementById('pm-cancel').onclick = close;
+  modal.addEventListener('pointerdown', e => { if (e.target === modal) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.dataset.open === 'true') close(); });
+  rmBtn.onclick = () => { setPhoto(null, true); close(); };
+  useBtn.onclick = () => {
+    if (!pending) return;
+    const i = new Image(); i.onload = () => { Object.assign(window.__photoXf, { x: 0, y: 0, s: 1, c: 0, b: 0, o: 100, f: false }); window.__photoToolOff(); window.__photoXfChanged(); setPhoto(i, true); close(); if (!localStorage.getItem('idcard-guide-seen')) setTimeout(() => window.__openPlacementGuide(), 260); }; i.src = pending;
+  };
+
+  drop.onclick = () => { if (drop.dataset.busy !== 'true') fileIn.click(); };
+  drop.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); drop.click(); } };
+  fileIn.onchange = () => fileIn.files[0] && handle(fileIn.files[0]);
+  drop.ondragover = e => { e.preventDefault(); drop.dataset.over = 'true'; };
+  drop.ondragleave = () => { drop.dataset.over = 'false'; };
+  drop.ondrop = e => { e.preventDefault(); drop.dataset.over = 'false'; const f = [...e.dataTransfer.files].find(f => f.type.startsWith('image/')); f && handle(f); };
+  document.addEventListener('paste', e => {
+    if (modal.dataset.open !== 'true') return;
+    const it = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+    if (it) { e.preventDefault(); handle(it.getAsFile()); }
+  });
+
+  // --- background removal (MediaPipe selfie segmentation, on-device) ---
+  let segP = null;
+  const getSegmenter = () => segP || (segP = (async () => {
+    const V = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+    const { FilesetResolver, ImageSegmenter } = await import(V + '/vision_bundle.mjs');
+    const fs = await FilesetResolver.forVisionTasks(V + '/wasm');
+    return ImageSegmenter.createFromOptions(fs, {
+      baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite', delegate: 'CPU' },
+      runningMode: 'IMAGE', outputCategoryMask: false, outputConfidenceMasks: true,
+    });
+  })().catch(e => { segP = null; throw e; }));
+
+  const readImg = f => new Promise((res, rej) => { const u = URL.createObjectURL(f), i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = u; });
+  const cropToAlpha = cv => {
+    const c = cv.getContext('2d'), { width: w, height: hh } = cv, d = c.getImageData(0, 0, w, hh).data;
+    let x0 = w, y0 = hh, x1 = -1, y1 = -1;
+    for (let y = 0; y < hh; y++) for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    if (x1 < 0) return null;
+    const out = document.createElement('canvas'); out.width = x1 - x0 + 1; out.height = y1 - y0 + 1;
+    out.getContext('2d').drawImage(cv, -x0, -y0);
+    return out;
+  };
+
+  async function handle(file) {
+    const job = ++jobId;
+    drop.dataset.busy = 'true'; useBtn.disabled = true; status.textContent = 'Scanning photo…';
+    try {
+      const img = await readImg(file);
+      const k = Math.min(1, 1200 / Math.max(img.naturalWidth, img.naturalHeight));
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
+      const c = cv.getContext('2d'); c.drawImage(img, 0, 0, cv.width, cv.height);
+      prev.src = cv.toDataURL('image/png'); prev.hidden = false; empty.hidden = true;
+
+      const px = c.getImageData(0, 0, cv.width, cv.height);
+      let transparent = 0; for (let i = 3; i < px.data.length; i += 16) if (px.data[i] < 250) transparent++;
+      let note;
+      if (transparent / (px.data.length / 16) > 0.04) note = 'No background detected — photo already transparent.';
+      else {
+        status.textContent = 'Removing background…';
+        const seg = await getSegmenter();
+        if (job !== jobId) return;
+        const res = seg.segment(cv);
+        const m = res.confidenceMasks[0].getAsFloat32Array();
+        const mw = res.confidenceMasks[0].width, mh = res.confidenceMasks[0].height;
+        // orientation guard: subject should be at the centre, not the corners
+        const at = (x, y) => m[Math.min(mh - 1, Math.floor(y * mh)) * mw + Math.min(mw - 1, Math.floor(x * mw))];
+        const centre = (at(.5, .5) + at(.5, .7)) / 2, corners = (at(.02, .02) + at(.98, .02)) / 2;
+        const inv = corners > centre;
+        for (let y = 0; y < cv.height; y++) for (let x = 0; x < cv.width; x++) {
+          let v = m[Math.floor(y * mh / cv.height) * mw + Math.floor(x * mw / cv.width)];
+          if (inv) v = 1 - v;
+          v = Math.min(1, Math.max(0, (v - 0.35) / 0.3)); v = v * v * (3 - 2 * v);
+          px.data[(y * cv.width + x) * 4 + 3] = Math.round(v * 255);
+        }
+        res.close && res.close();
+        c.putImageData(px, 0, 0);
+        note = 'Background removed.';
+      }
+      const out = cropToAlpha(cv);
+      if (!out) throw new Error('No person found in the photo.');
+      if (job !== jobId) return;
+      pending = out.toDataURL('image/png');
+      prev.src = pending; status.textContent = note + ' Press "Use Photo" to place it.'; useBtn.disabled = false;
+    } catch (err) {
+      if (job !== jobId) return;
+      status.textContent = 'Could not process this photo: ' + (err && err.message ? err.message : err);
+    } finally {
+      if (job === jobId) drop.dataset.busy = 'false';
+    }
+  }
+}
+
+// design preview
+const file = document.getElementById('file');
+file?.addEventListener('change', () => {
+  const f = file.files[0]; if (!f) return;
+  const url = URL.createObjectURL(f);
+  new THREE.TextureLoader().load(url, tex => {
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 8;
+    if (M.clear.map) M.clear.map.dispose();
+    M.clear.map = tex; M.clear.needsUpdate = true;
+  });
+});
+const clearBtn = document.getElementById('clear');
+if (clearBtn) clearBtn.onclick = () => {
+  if (M.clear.map) M.clear.map.dispose();
+  M.clear.map = null; M.clear.needsUpdate = true; file.value = '';
+};
+</script>
+</body>
+</html>
