@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OET ID Card Maker</title>
 <script type="importmap">
 {
@@ -229,10 +230,16 @@
   .gm-skip input:focus-visible + s{outline:2px solid var(--fg);outline-offset:2px}
   .icon-btn{all:unset;cursor:pointer;flex:none;width:34px;display:grid;place-items:center;border:1px solid var(--line);font:600 13px/1 "Plus Jakarta Sans",sans-serif;color:var(--fg);transition:border-color .2s}
   .icon-btn:hover{border-color:var(--fg)}
+  .mobile-disclaimer{display:none}
+  @media (max-width:768px){
+    .mobile-disclaimer{position:fixed;inset:0;z-index:999999;background:#E31937;color:#FFFEFB;display:flex;align-items:center;justify-content:center;text-align:center;box-sizing:border-box;padding:32px}
+    .mobile-disclaimer p{margin:0;max-width:320px;font:600 17px/1.5 "Plus Jakarta Sans",sans-serif}
+  }
 </style>
 <script>document.documentElement.dataset.theme = localStorage.getItem('idcard-theme') || 'light';</script>
 </head>
 <body>
+<div class="mobile-disclaimer" role="alert"><p>For the best experience, please visit this on Desktop. Thank you.</p></div>
 <div class="loader" id="loader" aria-hidden="true"><img src="assets/loading.png" alt="" width="475" height="38"></div>
 <script>if (sessionStorage.getItem('idcard-skip-loader')) { sessionStorage.removeItem('idcard-skip-loader'); document.getElementById('loader').remove(); }</script>
 <three-d-stage name="id-card-lanyard"></three-d-stage>
