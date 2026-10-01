@@ -180,6 +180,7 @@
   .seg button + button{border-left:1px solid var(--line)}
   .seg button:hover{color:var(--fg)}
   .seg button[aria-checked="true"]{background:var(--fg);color:var(--bg)}
+  .seg button[disabled]{opacity:.4;cursor:not-allowed;pointer-events:none}
   .ex-meta{font:400 11.5px/1.5 "Plus Jakarta Sans",sans-serif;color:var(--muted)}
   .ex-actions{display:flex;gap:8px;margin-top:auto}
   .ex-drive{display:flex;flex-direction:column;gap:12px;padding:14px;background:rgba(227,25,55,.1);border:1px solid rgba(227,25,55,.45)}
@@ -314,9 +315,9 @@
       <div class="ex-menu">
         <div class="field"><span>Format</span>
           <div class="seg" id="ex-format" role="radiogroup">
-            <button type="button" data-v="png" aria-checked="true" role="radio">PNG</button>
-            <button type="button" data-v="jpg" aria-checked="false" role="radio">JPG</button>
-            <button type="button" data-v="pdf" aria-checked="false" role="radio">PDF</button>
+            <button type="button" data-v="png" aria-checked="false" role="radio" disabled>PNG</button>
+            <button type="button" data-v="jpg" aria-checked="false" role="radio" disabled>JPG</button>
+            <button type="button" data-v="pdf" aria-checked="true" role="radio">PDF</button>
           </div>
         </div>
         <div class="field"><span>Resolution</span>
@@ -1109,7 +1110,7 @@ setScheme(schemeId);
 // ---------- export ----------
 {
   const em = document.getElementById('export-modal'), exImg = document.getElementById('ex-img'), exMeta = document.getElementById('ex-meta');
-  const MM_W = 54, MM_H = 85.6, opt = { format: 'png', res: 'print' };
+  const MM_W = 54, MM_H = 85.6, opt = { format: 'pdf', res: 'print' };
   const dims = () => opt.res === 'print' ? [Math.round(MM_W / 25.4 * 300), Math.round(MM_H / 25.4 * 300)] : [faceCv.width, faceCv.height];
   const fileBase = () => { const p = window.idProfile || {}; return ((p.name || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'oet') + '-id-card'; };
   const syncMeta = () => {
